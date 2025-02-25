@@ -27,13 +27,27 @@ FEAT] 면접 연습 기능 추가
 
 ---
 
-## ✅ 1. 주요 Branch 종류 및 역할  
+## ✅ 1. Branch 종류 및 역할  
 | 브랜치명     | 설명 |
 |------------|----------------------------------------|
 | **main**   | 🚀 배포 가능한 최종 코드 |
-| **develop** | 🛠 기능 개발이 완료된 코드 (테스트 후 `main`에 병합) |
+| **develop** | 🛠 기능 개발이 완료된 코드 (테스트 후 main에 병합) |
 | **feature/** | ✨ 새로운 기능 개발 브랜치 (예: feature/login-api) |
 | **fix/** | 🐛 버그 수정 브랜치 (예: fix/question-loading) |
 | **hotfix/** | 🚑 긴급 패치 브랜치 (예: hotfix/security-bug) |
 
 ---
+## 🚀 Git Branch 관리 가이드  
+
+### 1️⃣ PR(Pull Request) 전략  
+- feature/, fix/ 브랜치는 develop으로 PR 생성  
+- develop에서 main으로 병합할 때 코드 리뷰 후 진행  
+- hotfix/ 브랜치는 긴급 배포를 위해 main으로 직접 PR 가능  
+
+### 2️⃣ Branch 네이밍 규칙  
+- feature/{기능명} → 새로운 기능 개발 브랜치 (예: feature/login-api)  
+- fix/{버그명} → 버그 수정 브랜치 (예: fix/question-loading)  
+- hotfix/{긴급수정명} → 긴급 패치 브랜치 (예: hotfix/security-bug)  
+
+### 3️⃣ 브랜치 삭제 규칙  
+- PR이 merge되면 feature/, fix/ 브랜치는 삭제  
