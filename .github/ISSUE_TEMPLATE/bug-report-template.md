@@ -8,11 +8,12 @@ assignees: ''
 ---
 
 ---
-name: 🐛 버그 리포트 (Bug Report)
-about: 발생한 버그를 상세히 설명해주세요.
-title: "[BUG] "
-labels: bug
-assignees: ''
+name: 🐛 버그 리포트 (Bug Report)  
+about: 발생한 버그를 상세히 설명해주세요.  
+
+title: "[BUG] "  
+labels: bug  
+assignees: ""  
 
 ---
 
