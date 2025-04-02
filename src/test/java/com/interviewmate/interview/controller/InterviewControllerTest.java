@@ -33,7 +33,7 @@ class InterviewControllerTest {
 
     @Test
     void createInterview_API정상호출() throws Exception {
-        // given: 요청 객체 생성
+
         InterviewRequest request = new InterviewRequest();
         request.setTopic("백엔드 개발");
 
@@ -41,7 +41,6 @@ class InterviewControllerTest {
 
         given(interviewService.createInterview(any())).willReturn(output);
 
-        // when & then: 요청 보내고 응답 검증
         MvcResult result = mockMvc.perform(post("/api/interviews")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))

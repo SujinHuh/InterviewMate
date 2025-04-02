@@ -14,13 +14,11 @@ class InterviewServiceTest {
 
     @Test
     void createInterview_200_OK(){
-        //Given
+
         InterviewInput input = new InterviewInput("백엔드 개발");
 
-        //When
         InterviewOutput output = interviewService.createInterview(input);
 
-        //Then
         assertNotNull(output.getInterviewId());
         assertEquals("백엔드 개발", output.getTopic());
     }
