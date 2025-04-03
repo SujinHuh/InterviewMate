@@ -19,17 +19,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(InterviewController.class)// 컨트롤러 단위의 통합 테스트
+@WebMvcTest(InterviewController.class)
 class InterviewControllerTest {
 
     @Autowired
-    private MockMvc mockMvc; //가상의 요청을 보내주는 도구
+    private MockMvc mockMvc;
 
     @MockBean
-    private InterviewService interviewService; // service를 가짜 (mock)로 주입
+    private InterviewService interviewService;
 
     @Autowired
-    private ObjectMapper objectMapper; // 객체 <-> JSON 변환기
+    private ObjectMapper objectMapper;
 
     @Test
     void createInterview_API정상호출() throws Exception {
