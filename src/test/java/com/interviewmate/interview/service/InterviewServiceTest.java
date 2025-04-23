@@ -1,19 +1,25 @@
 package com.interviewmate.interview.service;
 
-import com.interviewmate.interview.controller.dto.InterviewRequest;
-import com.interviewmate.interview.controller.dto.InterviewResponse;
 import com.interviewmate.interview.service.gpt.GptClient;
-import com.interviewmate.interview.service.model.InterviewInput;
-import com.interviewmate.interview.service.model.InterviewOutput;
+import com.interviewmate.interview.service.model.*;
+import groovyjarjarantlr4.v4.codegen.model.SrcOp;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.mock;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.ArgumentMatchers.anyList;
 
+@ExtendWith(MockitoExtension.class)
 class InterviewServiceTest {
 
-    InterviewService interviewService;
-    GptClient gptClient = mock(GptClient.class);
+    @Mock
+    private GptClient gptClient;
+    @InjectMocks
+    private InterviewServiceImpl interviewService;
 
     @Test
     void createInterview_200_OK(){
@@ -26,5 +32,36 @@ class InterviewServiceTest {
         assertEquals("백엔드 개발", output.getTopic());
     }
 
+    @Test
+    void generateQuestion_OK() {
+        String topic = "Java의 동시성";
+
+        InterviewGptMessage message = new InterviewGptMessage("동시성은 어떤 문제를 발생시키나요?");
+        InterviewGptResult result = new InterviewGptResult(message);
+        InterviewGptResponse mockedResponse = new InterviewGptResponse(result);
+
+        given(gptClient.generate(anyList())).willReturn(mockedResponse);
+
+        String generatedQuestion = interviewService.generateQuestion(topic);
+
+        assertEquals("동시성은 어떤 문제를 발생시키나요?",generatedQuestion);
+    }
+
+    @Test
+    void generateFeedback_OK() {
+        //mock으로 질문을 생성하고
+        String answer = "HTTP 는 상태를 유지하지 않는다.";
+        InterviewGptMessage mockMessage = new InterviewGptMessage("좋은 답변이에요. 상태 유지 방식에 대해 구체적인 예시를 들어도 좋아요.");
+        InterviewGptResult mockResult = new InterviewGptResult(mockMessage);
+        InterviewGptResponse mockResponse = new InterviewGptResponse(mockResult);
+
+        given(gptClient.generate(anyList())).willReturn(mockResponse);
+
+        String feedback = interviewService.generateFeedback(answer);
+
+        assertNotNull(feedback);
+        assertEquals("좋은 답변이에요. 상태 유지 방식에 대해 구체적인 예시를 들어도 좋아요.", feedback);
+
+    }
 
 }

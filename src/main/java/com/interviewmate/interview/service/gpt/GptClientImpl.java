@@ -1,37 +1,38 @@
 package com.interviewmate.interview.service.gpt;
 
-import com.interviewmate.interview.service.model.ChatOutput;
-import com.interviewmate.interview.service.model.ChatRequest;
-import com.interviewmate.interview.service.model.ChatResponse;
-import com.interviewmate.interview.service.model.ChatResult;
+import com.interviewmate.interview.service.model.InterviewGptMessage;
+import com.interviewmate.interview.service.model.InterviewGptResponse;
+import com.interviewmate.interview.service.model.InterviewGptResult;
+import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.messages.*;
+import org.springframework.stereotype.Component;
+import org.springframework.ai.chat.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.openai.OpenAiChatClient;
-import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Component
+@RequiredArgsConstructor
 public class GptClientImpl implements GptClient{
     private final OpenAiChatClient chatClient;
 
-    public GptClientImpl(OpenAiChatClient chatClient){
-        this.chatClient = chatClient;
-    }
-
     @Override
-    public ChatResponse generate(List<Message> messages) {
-        org.springframework.ai.chat.ChatResponse springResponse = chatClient.call(new Prompt(messages));
-        return mapFrom(springResponse);
+    public InterviewGptResponse generate(List<Message> messages) {
+        ChatResponse gptResponse = chatClient.call(new Prompt(messages));
+        return mapFrom(gptResponse);
     }
     @Override
     public String generateQuestion(String topic) {
         List<Message> messages = List.of(
-                new SystemMessage("너는 면접관이야. 주어진 주제에 대해 하나의 면접 질문을 만들어줘."),
+                new SystemMessage("너는 10년차 IT기업 백엔드 개발자 면접관이야. 아래는 한 지원자가 기술 면접에서 한 답변이야.\n" +
+                        "답변을 읽고 아래 기준에 따라 간단하고 명확한 피드백을 제공해줘.\n" +
+                        "1. 논리적 구조 2. 기술 이해도 3. 핵심 전달력\n" +
+                        "각 항목별로 1~2문장 이내로, 지원자가 성장할 수 있도록 구체적이고 긍정적인 언어로 작성해줘.\n"),
                 new UserMessage("주제: " + topic)
         );
 
-        ChatResponse response = mapFrom(chatClient.call(new Prompt(messages)));
+        InterviewGptResponse response = mapFrom(chatClient.call(new Prompt(messages)));
         return response.getResult().getOutput().getContent();
     }
 
@@ -39,19 +40,21 @@ public class GptClientImpl implements GptClient{
     public String generateFeedback(String answer) {
 
         List<Message> messages = List.of(
-                new SystemMessage("너는 면접관이야. 아래 면접 답변에 대한 간단한 피드백을 제공해줘."),
+                new SystemMessage("너는 10년차 IT기업 백엔드 개발자 면접관이야. 아래는 주제야." +
+                        "해당 주제를 바탕으로 기술 면접에서 사용할 질문을 하나 만들어줘." +
+                        "질문은 명확하고 기술적인 관점에서 작성해줘."),
                 new UserMessage("답변 : " + answer)
         );
 
-       ChatResponse response = mapFrom(chatClient.call(new Prompt(messages)));
+       InterviewGptResponse response = mapFrom(chatClient.call(new Prompt(messages)));
         return response.getResult().getOutput().getContent();
     }
 
-    private ChatResponse mapFrom(org.springframework.ai.chat.ChatResponse springResponse){
+    private InterviewGptResponse mapFrom(org.springframework.ai.chat.ChatResponse springResponse){
 
-        ChatOutput output = new ChatOutput(springResponse.getResult().getOutput().getContent());
-        ChatResult result = new ChatResult(output);
-        return new ChatResponse(result);
+        InterviewGptMessage output = new InterviewGptMessage(springResponse.getResult().getOutput().getContent());
+        InterviewGptResult result = new InterviewGptResult(output);
+        return new InterviewGptResponse(result);
 
     }
 }
