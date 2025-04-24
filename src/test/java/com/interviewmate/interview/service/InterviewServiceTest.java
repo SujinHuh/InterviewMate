@@ -2,7 +2,6 @@ package com.interviewmate.interview.service;
 
 import com.interviewmate.interview.service.gpt.GptClient;
 import com.interviewmate.interview.service.model.*;
-import groovyjarjarantlr4.v4.codegen.model.SrcOp;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -36,9 +35,9 @@ class InterviewServiceTest {
     void generateQuestion_OK() {
         String topic = "Java의 동시성";
 
-        InterviewGptMessage message = new InterviewGptMessage("동시성은 어떤 문제를 발생시키나요?");
-        InterviewGptResult result = new InterviewGptResult(message);
-        InterviewGptResponse mockedResponse = new InterviewGptResponse(result);
+        AiChatMessage message = new AiChatMessage("동시성은 어떤 문제를 발생시키나요?");
+        AiChatResult result = new AiChatResult(message);
+        AiChatResponse mockedResponse = new AiChatResponse(result);
 
         given(gptClient.generate(anyList())).willReturn(mockedResponse);
 
@@ -51,9 +50,9 @@ class InterviewServiceTest {
     void generateFeedback_OK() {
         //mock으로 질문을 생성하고
         String answer = "HTTP 는 상태를 유지하지 않는다.";
-        InterviewGptMessage mockMessage = new InterviewGptMessage("좋은 답변이에요. 상태 유지 방식에 대해 구체적인 예시를 들어도 좋아요.");
-        InterviewGptResult mockResult = new InterviewGptResult(mockMessage);
-        InterviewGptResponse mockResponse = new InterviewGptResponse(mockResult);
+        AiChatMessage mockMessage = new AiChatMessage("좋은 답변이에요. 상태 유지 방식에 대해 구체적인 예시를 들어도 좋아요.");
+        AiChatResult mockResult = new AiChatResult(mockMessage);
+        AiChatResponse mockResponse = new AiChatResponse(mockResult);
 
         given(gptClient.generate(anyList())).willReturn(mockResponse);
 

@@ -5,6 +5,6 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public final class InterviewGptResponse {
-    private InterviewGptResult result;
+public final class AiChatResponse {
+    private AiChatResult result;
 }

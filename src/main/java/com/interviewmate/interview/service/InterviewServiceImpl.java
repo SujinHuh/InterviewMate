@@ -2,7 +2,7 @@ package com.interviewmate.interview.service;
 
 
 import com.interviewmate.interview.service.gpt.GptClient;
-import com.interviewmate.interview.service.model.InterviewGptResponse;
+import com.interviewmate.interview.service.model.AiChatResponse;
 import com.interviewmate.interview.service.model.InterviewInput;
 import com.interviewmate.interview.service.model.InterviewOutput;
 import lombok.RequiredArgsConstructor;
@@ -35,7 +35,7 @@ public class InterviewServiceImpl implements InterviewService {
                         "질문은 명확하고 기술적인 관점에서 작성해줘."),
                 new UserMessage("주제: " + topic)
         );
-        InterviewGptResponse response = gptClient.generate(messages);
+        AiChatResponse response = gptClient.generate(messages);
         return response.getResult().getOutput().getContent();
     }
 
@@ -48,7 +48,7 @@ public class InterviewServiceImpl implements InterviewService {
                         "각 항목별로 1~2문장 이내로, 지원자가 성장할 수 있도록 구체적이고 긍정적인 언어로 작성해줘.\n"),
                 new UserMessage("답변 : " + answer)
         );
-        InterviewGptResponse response = gptClient.generate(messages);
+        AiChatResponse response = gptClient.generate(messages);
         return response.getResult().getOutput().getContent();
     }
 

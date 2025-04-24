@@ -1,8 +1,8 @@
 package com.interviewmate.interview.service.gpt;
 
-import com.interviewmate.interview.service.model.InterviewGptMessage;
-import com.interviewmate.interview.service.model.InterviewGptResponse;
-import com.interviewmate.interview.service.model.InterviewGptResult;
+import com.interviewmate.interview.service.model.AiChatMessage;
+import com.interviewmate.interview.service.model.AiChatResponse;
+import com.interviewmate.interview.service.model.AiChatResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.messages.*;
 import org.springframework.stereotype.Component;
@@ -18,7 +18,7 @@ public class GptClientImpl implements GptClient{
     private final OpenAiChatClient chatClient;
 
     @Override
-    public InterviewGptResponse generate(List<Message> messages) {
+    public AiChatResponse generate(List<Message> messages) {
         ChatResponse gptResponse = chatClient.call(new Prompt(messages));
         return mapFrom(gptResponse);
     }
@@ -32,7 +32,7 @@ public class GptClientImpl implements GptClient{
                 new UserMessage("주제: " + topic)
         );
 
-        InterviewGptResponse response = mapFrom(chatClient.call(new Prompt(messages)));
+        AiChatResponse response = mapFrom(chatClient.call(new Prompt(messages)));
         return response.getResult().getOutput().getContent();
     }
 
@@ -46,15 +46,15 @@ public class GptClientImpl implements GptClient{
                 new UserMessage("답변 : " + answer)
         );
 
-       InterviewGptResponse response = mapFrom(chatClient.call(new Prompt(messages)));
+       AiChatResponse response = mapFrom(chatClient.call(new Prompt(messages)));
         return response.getResult().getOutput().getContent();
     }
 
-    private InterviewGptResponse mapFrom(org.springframework.ai.chat.ChatResponse springResponse){
+    private AiChatResponse mapFrom(org.springframework.ai.chat.ChatResponse springResponse){
 
-        InterviewGptMessage output = new InterviewGptMessage(springResponse.getResult().getOutput().getContent());
-        InterviewGptResult result = new InterviewGptResult(output);
-        return new InterviewGptResponse(result);
+        AiChatMessage output = new AiChatMessage(springResponse.getResult().getOutput().getContent());
+        AiChatResult result = new AiChatResult(output);
+        return new AiChatResponse(result);
 
     }
 }

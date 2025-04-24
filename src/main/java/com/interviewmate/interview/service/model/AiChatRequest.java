@@ -8,7 +8,7 @@ import java.util.List;
 @Getter
 @Builder
 @AllArgsConstructor
-public final class InterviewGptRequest {
+public final class AiChatRequest {
     private String topic;
     private List<Message> messages;
 }
