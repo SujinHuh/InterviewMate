@@ -1,10 +1,3 @@
 package com.interviewmate.interview.service.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-
-@Getter
-@AllArgsConstructor
-public final class AiChatMessage {
-    private String content;
-}
+public record AiChatMessage (String content){}

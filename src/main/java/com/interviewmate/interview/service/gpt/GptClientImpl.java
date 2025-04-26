@@ -33,7 +33,7 @@ public class GptClientImpl implements GptClient{
         );
 
         AiChatResponse response = mapFrom(chatClient.call(new Prompt(messages)));
-        return response.getResult().getOutput().getContent();
+        return response.result().output().content();
     }
 
     @Override
@@ -47,12 +47,13 @@ public class GptClientImpl implements GptClient{
         );
 
        AiChatResponse response = mapFrom(chatClient.call(new Prompt(messages)));
-        return response.getResult().getOutput().getContent();
+        return response.result().output().content();
     }
 
-    private AiChatResponse mapFrom(org.springframework.ai.chat.ChatResponse springResponse){
+    private AiChatResponse mapFrom(ChatResponse springResponse){
 
-        AiChatMessage output = new AiChatMessage(springResponse.getResult().getOutput().getContent());
+        String content = springResponse.getResult().getOutput().getContent();
+        AiChatMessage output = new AiChatMessage(content);
         AiChatResult result = new AiChatResult(output);
         return new AiChatResponse(result);
 
