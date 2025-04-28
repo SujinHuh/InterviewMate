@@ -62,3 +62,5 @@ out/
 hs_err_pid*
 replay_pid*
 >>>>>>> daff70a47ad9fb96f940bf35bb400b72c582648e
+.env
+src/main/resources/application.yml
