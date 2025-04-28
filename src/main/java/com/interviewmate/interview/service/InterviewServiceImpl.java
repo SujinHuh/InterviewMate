@@ -36,7 +36,7 @@ public class InterviewServiceImpl implements InterviewService {
                 new UserMessage("주제: " + topic)
         );
         AiChatResponse response = gptClient.generate(messages);
-        return response.getResult().getOutput().getContent();
+        return response.result().output().content();
     }
 
     @Override
@@ -49,7 +49,7 @@ public class InterviewServiceImpl implements InterviewService {
                 new UserMessage("답변 : " + answer)
         );
         AiChatResponse response = gptClient.generate(messages);
-        return response.getResult().getOutput().getContent();
+        return response.result().output().content();
     }
 
 
