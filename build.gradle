@@ -43,7 +43,7 @@ dependencies {
 	compileOnly 'org.springframework.boot:spring-boot-configuration-processor'
 	annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
 	runtimeOnly 'mysql:mysql-connector-java:8.0.33'
-
+	implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
 }
 
 tasks.named('test') {

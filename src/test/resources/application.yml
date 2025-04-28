@@ -1,0 +1,16 @@
+spring:
+  ai:
+    openai:
+      api-key:
+      chat:
+        model: gpt-3.5-turbo
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/test_db?serverTimezone=Asia/Seoul
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  mybatis:
+    mapper-locations: classpath:mapper/**/*.xml
+    type-aliases-package: com.interviewmate.interview.domain
