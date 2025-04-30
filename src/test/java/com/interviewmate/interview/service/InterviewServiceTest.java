@@ -1,5 +1,6 @@
 package com.interviewmate.interview.service;
 
+import com.interviewmate.interview.repository.InterviewMapper;
 import com.interviewmate.interview.service.gpt.GptClient;
 import com.interviewmate.interview.service.model.*;
 import org.junit.jupiter.api.Test;
@@ -19,11 +20,13 @@ class InterviewServiceTest {
     private GptClient gptClient;
     @InjectMocks
     private InterviewServiceImpl interviewService;
+    @Mock
+    private InterviewMapper interviewMapper;
 
     @Test
     void createInterview_200_OK(){
 
-        InterviewInput input = new InterviewInput("백엔드 개발");
+        InterviewInput input = new InterviewInput("user-123", "백엔드 개발");
 
         InterviewOutput output = interviewService.createInterview(input);
 

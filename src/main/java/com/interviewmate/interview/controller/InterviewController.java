@@ -21,7 +21,7 @@ public class InterviewController {
     @PostMapping
     public ResponseEntity<InterviewResponse> createInterview(@RequestBody InterviewRequest request){
 
-        InterviewInput input = new InterviewInput(request.getTopic());
+        InterviewInput input = new InterviewInput(request.getUserId(),request.getTopic());
 
         InterviewOutput output = interviewService.createInterview(input);
 

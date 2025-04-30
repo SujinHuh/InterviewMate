@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.interviewmate.interview.repository.InterviewMapper">
+
+    <insert id="insert" parameterType="com.interviewmate.interview.domain.Interview">
+        INSERT INTO interviews
+        (id, user_id, topic, status, question_generated, final_feedback, created_at, updated_at)
+        VALUES
+            (#{id}, #{userId}, #{topic}, #{status}, #{questionGenerated}, #{finalFeedback}, #{createdAt}, #{updatedAt})
+    </insert>
+
+    <select id="findById" resultType="com.interviewmate.interview.domain.Interview">
+        SELECT *
+        FROM interviews
+        WHERE id = #{id}
+    </select>
+
+</mapper>

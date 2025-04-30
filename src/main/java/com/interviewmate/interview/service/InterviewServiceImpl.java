@@ -1,6 +1,8 @@
 package com.interviewmate.interview.service;
 
 
+import com.interviewmate.interview.domain.Interview;
+import com.interviewmate.interview.repository.InterviewMapper;
 import com.interviewmate.interview.service.gpt.GptClient;
 import com.interviewmate.interview.service.model.AiChatResponse;
 import com.interviewmate.interview.service.model.InterviewInput;
@@ -11,6 +13,7 @@ import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.stereotype.Service;
 
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.UUID;
 
@@ -18,12 +21,26 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class InterviewServiceImpl implements InterviewService {
     private final GptClient gptClient;
+    private final InterviewMapper interviewMapper;
 
     @Override
     public InterviewOutput createInterview(InterviewInput input) {
 
         String generatedId = UUID.randomUUID().toString();
+        Timestamp now = new Timestamp(System.currentTimeMillis());
 
+        Interview interview = new Interview(
+                generatedId,
+                input.getUserId(),
+                input.getTopic(),
+                "IN_PROGRESS",
+                false,
+                null,
+                now,
+                now
+        );
+
+        interviewMapper.insert(interview);
         return new InterviewOutput(generatedId, input.getTopic());
     }
 
