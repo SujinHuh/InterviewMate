@@ -1,2 +1,4 @@
-DELETE FROM interviews;
-DELETE FROM users;
+DELETE
+FROM interviews;
+DELETE
+FROM users;

@@ -1,21 +1,24 @@
-package com.interviewmate.interview.domain;
+package com.interviewmate.interview.controller.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.sql.Timestamp;
 
 @Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class InterviewQuestion {
+public class QuestionResponse {
+
     private String id;
-    private String interviewId;
     private String content;
     private int questionOrder;
-    private boolean answered;
+    private boolean isAnswered;
     private Timestamp createdAt;
+
+    public QuestionResponse(String content) {
+        this.content = content;
+    }
+
 }

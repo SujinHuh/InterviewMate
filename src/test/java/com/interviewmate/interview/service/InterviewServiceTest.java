@@ -9,9 +9,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.BDDMockito.given;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.BDDMockito.given;
 
 @ExtendWith(MockitoExtension.class)
 class InterviewServiceTest {
@@ -24,7 +25,7 @@ class InterviewServiceTest {
     private InterviewMapper interviewMapper;
 
     @Test
-    void createInterview_200_OK(){
+    void createInterview_200_OK() {
 
         InterviewInput input = new InterviewInput("user-123", "백엔드 개발");
 
@@ -46,12 +47,12 @@ class InterviewServiceTest {
 
         String generatedQuestion = interviewService.generateQuestion(topic);
 
-        assertEquals("동시성은 어떤 문제를 발생시키나요?",generatedQuestion);
+        assertEquals("동시성은 어떤 문제를 발생시키나요?", generatedQuestion);
     }
 
     @Test
     void generateFeedback_OK() {
-        //mock으로 질문을 생성하고
+
         String answer = "HTTP 는 상태를 유지하지 않는다.";
         AiChatMessage mockMessage = new AiChatMessage("좋은 답변이에요. 상태 유지 방식에 대해 구체적인 예시를 들어도 좋아요.");
         AiChatResult mockResult = new AiChatResult(mockMessage);

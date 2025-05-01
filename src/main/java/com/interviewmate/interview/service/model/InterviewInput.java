@@ -6,6 +6,7 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public class InterviewInput {
+
     private String userId;
     private String topic;
 

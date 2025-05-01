@@ -2,6 +2,7 @@ package com.interviewmate.interview.domain;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+
 import java.sql.Timestamp;
 
 public record Interview(
@@ -13,4 +14,5 @@ public record Interview(
         String finalFeedback,
         Timestamp createdAt,
         Timestamp updatedAt
-) {}
+) {
+}

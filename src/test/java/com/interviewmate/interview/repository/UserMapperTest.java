@@ -1,7 +1,6 @@
 package com.interviewmate.interview.repository;
 
 import com.interviewmate.interview.domain.User;
-import org.apache.ibatis.annotations.Mapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -27,7 +26,6 @@ public class UserMapperTest {
 
         userMapper.insert(user);
 
-        // insert 메서드 호출 후 user.getId()가 변했으면(=키 생성되었으면) 통과
         assertThat(user.getId()).isNotNull();
     }
 }

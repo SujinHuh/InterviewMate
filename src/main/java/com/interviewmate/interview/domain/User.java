@@ -12,8 +12,10 @@ import java.sql.Timestamp;
 @NoArgsConstructor
 @AllArgsConstructor
 public class User {
+
     private String id;
     private String nickname;
     private boolean isGuest;
     private Timestamp createdAt;
+
 }

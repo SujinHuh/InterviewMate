@@ -1,11 +1,12 @@
 package com.interviewmate.interview.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.interviewmate.interview.controller.dto.InterviewRequest;
 import com.interviewmate.interview.controller.dto.InterviewResponse;
+import com.interviewmate.interview.controller.dto.QuestionResponse;
 import com.interviewmate.interview.domain.User;
 import com.interviewmate.interview.repository.InterviewMapper;
 import com.interviewmate.interview.repository.UserMapper;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mybatis.spring.annotation.MapperScan;
@@ -57,8 +58,8 @@ class InterviewControllerIntegrationTest {
         var mvcResult = mockMvc.perform(post("/api/interviews")
                         .contentType("application/json")
                         .content(objectMapper.writeValueAsString(request)))
-                        .andExpect(status().isOk())
-                        .andReturn();
+                .andExpect(status().isOk())
+                .andReturn();
 
         String json = mvcResult.getResponse().getContentAsString();
         InterviewResponse resp = objectMapper.readValue(json, InterviewResponse.class);
@@ -68,5 +69,37 @@ class InterviewControllerIntegrationTest {
         assertThat(saved).isNotNull();
         assertThat(saved.userId()).isEqualTo("user-123");
         assertThat(saved.topic()).isEqualTo("spring");
+    }
+
+    @Test
+    void createQuestion_정상동작_인터뷰ID로_질문생성요청() throws Exception {
+        InterviewRequest request = new InterviewRequest();
+        request.setUserId("user-123");
+        String topic = "spring";
+        request.setTopic(topic);
+
+        var mvcResult = mockMvc.perform(post("/api/interviews")
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String json = mvcResult.getResponse().getContentAsString();
+        InterviewResponse resp = objectMapper.readValue(json, InterviewResponse.class);
+        String interviewId = resp.getInterviewId();
+
+        String url = "/api/interviews/" + interviewId + "/questions";
+
+        var createQuestion = mockMvc.perform(post(url))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String questionResponse = createQuestion.getResponse().getContentAsString();
+        QuestionResponse response = objectMapper.readValue(questionResponse, QuestionResponse.class);
+
+        String question = response.getContent();
+        assertThat(question).isNotNull();
+        assertThat(question).isNotBlank();
+        assertThat(question.toLowerCase()).contains(topic);
     }
 }

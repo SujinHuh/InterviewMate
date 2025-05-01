@@ -10,8 +10,8 @@ import org.apache.ibatis.annotations.Options;
 @Mapper
 public interface UserMapper {
     @Insert("""
-      INSERT INTO users (id, nickname, is_guest, created_at)
-      VALUES (#{id}, #{nickname}, #{isGuest}, NOW())
-    """)
+              INSERT INTO users (id, nickname, is_guest, created_at)
+              VALUES (#{id}, #{nickname}, #{isGuest}, NOW())
+            """)
     void insert(User user);
 }
