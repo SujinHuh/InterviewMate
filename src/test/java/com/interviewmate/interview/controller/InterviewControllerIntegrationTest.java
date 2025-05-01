@@ -66,7 +66,7 @@ class InterviewControllerIntegrationTest {
 
         var saved = interviewMapper.findById(interviewId);
         assertThat(saved).isNotNull();
-        assertThat(saved.getUserId()).isEqualTo("user-123");
-        assertThat(saved.getTopic()).isEqualTo("spring");
+        assertThat(saved.userId()).isEqualTo("user-123");
+        assertThat(saved.topic()).isEqualTo("spring");
     }
 }
