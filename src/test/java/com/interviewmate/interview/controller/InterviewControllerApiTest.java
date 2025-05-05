@@ -46,8 +46,9 @@ class InterviewControllerApiTest {
 
     @Test
     void createInterview_API정상호출() throws Exception {
-        InterviewRequest request = new InterviewRequest();
-        request.setTopic("백엔드 개발");
+        InterviewRequest request = InterviewRequest.builder()
+                .topic("백엔드 개발")
+                .build();
 
         InterviewOutput output = new InterviewOutput("12345", "백엔드 개발");
 

@@ -7,8 +7,6 @@ import lombok.NoArgsConstructor;
 import java.sql.Timestamp;
 
 @Getter
-@NoArgsConstructor
-@AllArgsConstructor
 public class QuestionResponse {
 
     private String id;

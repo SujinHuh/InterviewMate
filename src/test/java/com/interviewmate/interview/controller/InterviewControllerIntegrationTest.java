@@ -50,10 +50,10 @@ class InterviewControllerIntegrationTest {
 
     @Test
     void createInterview_DB까지저장확인() throws Exception {
-        InterviewRequest request = new InterviewRequest();
-        request.setUserId("user-123");
-        request.setTopic("spring");
-
+        InterviewRequest request = InterviewRequest.builder()
+                .userId("user-123")
+                .topic("spring")
+                .build();
 
         var mvcResult = mockMvc.perform(post("/api/interviews")
                         .contentType("application/json")
@@ -73,10 +73,11 @@ class InterviewControllerIntegrationTest {
 
     @Test
     void createQuestion_정상동작_인터뷰ID로_질문생성요청() throws Exception {
-        InterviewRequest request = new InterviewRequest();
-        request.setUserId("user-123");
         String topic = "spring";
-        request.setTopic(topic);
+        InterviewRequest request = InterviewRequest.builder()
+                .userId("user-123")
+                .topic(topic)
+                .build();
 
         var mvcResult = mockMvc.perform(post("/api/interviews")
                         .contentType("application/json")
