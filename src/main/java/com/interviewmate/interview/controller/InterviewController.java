@@ -1,11 +1,13 @@
 package com.interviewmate.interview.controller;
 
+import com.interviewmate.exception.InterviewCreationException;
 import com.interviewmate.interview.controller.dto.InterviewRequest;
 import com.interviewmate.interview.controller.dto.InterviewResponse;
 import com.interviewmate.interview.controller.dto.QuestionResponse;
 import com.interviewmate.interview.service.InterviewService;
 import com.interviewmate.interview.service.model.InterviewInput;
 import com.interviewmate.interview.service.model.InterviewOutput;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,11 +22,15 @@ public class InterviewController {
     }
 
     @PostMapping
-    public ResponseEntity<InterviewResponse> createInterview(@RequestBody InterviewRequest request) {
+    public ResponseEntity<InterviewResponse> createInterview(@Valid @RequestBody InterviewRequest request) {
 
         InterviewInput input = new InterviewInput(request.getUserId(), request.getTopic());
 
         InterviewOutput output = interviewService.createInterview(input);
+
+        if (output.getInterviewId() == null) {
+            throw new InterviewCreationException("생성된 인터뷰 ID가 null입니다.");
+        }
 
         InterviewResponse response = new InterviewResponse(output.getInterviewId(), output.getTopic());
 
@@ -33,7 +39,6 @@ public class InterviewController {
 
     @PostMapping("/{interviewId}/questions")
     public ResponseEntity<QuestionResponse> createQuestions(@PathVariable String interviewId) {
-
 
         String topic = interviewService.getTopicByInterviewId(interviewId);
 
