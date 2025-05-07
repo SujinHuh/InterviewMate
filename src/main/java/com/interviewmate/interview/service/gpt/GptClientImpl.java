@@ -14,7 +14,7 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
-public class GptClientImpl implements GptClient{
+public class GptClientImpl implements GptClient {
     private final OpenAiChatClient chatClient;
 
     @Override
@@ -22,6 +22,7 @@ public class GptClientImpl implements GptClient{
         ChatResponse gptResponse = chatClient.call(new Prompt(messages));
         return mapFrom(gptResponse);
     }
+
     @Override
     public String generateQuestion(String topic) {
         List<Message> messages = List.of(
@@ -46,11 +47,11 @@ public class GptClientImpl implements GptClient{
                 new UserMessage("답변 : " + answer)
         );
 
-       AiChatResponse response = mapFrom(chatClient.call(new Prompt(messages)));
+        AiChatResponse response = mapFrom(chatClient.call(new Prompt(messages)));
         return response.result().output().content();
     }
 
-    private AiChatResponse mapFrom(ChatResponse springResponse){
+    private AiChatResponse mapFrom(ChatResponse springResponse) {
 
         String content = springResponse.getResult().getOutput().getContent();
         AiChatMessage output = new AiChatMessage(content);

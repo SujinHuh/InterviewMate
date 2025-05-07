@@ -7,6 +7,8 @@ import java.util.List;
 
 public interface GptClient {
     AiChatResponse generate(List<Message> messages);
+
     String generateQuestion(String topic);
+
     String generateFeedback(String answer);
 }

@@ -1,3 +1,4 @@
 package com.interviewmate.interview.service.model;
 
-public record AiChatMessage (String content){}
+public record AiChatMessage(String content) {
+}

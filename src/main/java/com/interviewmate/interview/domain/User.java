@@ -11,11 +11,11 @@ import java.sql.Timestamp;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class InterviewQuestion {
+public class User {
+
     private String id;
-    private String interviewId;
-    private String content;
-    private int questionOrder;
-    private boolean answered;
+    private String nickname;
+    private boolean isGuest;
     private Timestamp createdAt;
+
 }

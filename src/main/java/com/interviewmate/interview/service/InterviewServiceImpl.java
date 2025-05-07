@@ -1,6 +1,10 @@
 package com.interviewmate.interview.service;
 
 
+import com.interviewmate.interview.domain.Interview;
+import com.interviewmate.interview.domain.InterviewQuestion;
+import com.interviewmate.interview.repository.InterviewMapper;
+import com.interviewmate.interview.repository.InterviewQuestionMapper;
 import com.interviewmate.interview.service.gpt.GptClient;
 import com.interviewmate.interview.service.model.AiChatResponse;
 import com.interviewmate.interview.service.model.InterviewInput;
@@ -11,6 +15,7 @@ import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.stereotype.Service;
 
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.UUID;
 
@@ -18,12 +23,27 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class InterviewServiceImpl implements InterviewService {
     private final GptClient gptClient;
+    private final InterviewMapper interviewMapper;
+    private final InterviewQuestionMapper interviewQuestionMapper;
 
     @Override
     public InterviewOutput createInterview(InterviewInput input) {
 
         String generatedId = UUID.randomUUID().toString();
+        Timestamp now = new Timestamp(System.currentTimeMillis());
 
+        Interview interview = new Interview(
+                generatedId,
+                input.getUserId(),
+                input.getTopic(),
+                "IN_PROGRESS",
+                false,
+                null,
+                now,
+                now
+        );
+
+        interviewMapper.insert(interview);
         return new InterviewOutput(generatedId, input.getTopic());
     }
 
@@ -36,7 +56,7 @@ public class InterviewServiceImpl implements InterviewService {
                 new UserMessage("주제: " + topic)
         );
         AiChatResponse response = gptClient.generate(messages);
-        return response.getResult().getOutput().getContent();
+        return response.result().output().content();
     }
 
     @Override
@@ -49,7 +69,33 @@ public class InterviewServiceImpl implements InterviewService {
                 new UserMessage("답변 : " + answer)
         );
         AiChatResponse response = gptClient.generate(messages);
-        return response.getResult().getOutput().getContent();
+        return response.result().output().content();
+    }
+
+    @Override
+    public String getTopicByInterviewId(String interviewId) {
+
+        Interview interview = interviewMapper.findById(interviewId);
+
+        return interview.topic();
+    }
+
+    @Override
+    public void saveQuestion(String interviewId, String question) {
+
+        String qusetionId = UUID.randomUUID().toString();
+
+        Timestamp now = new Timestamp(System.currentTimeMillis());
+
+        InterviewQuestion interviewQuestion = new InterviewQuestion(
+                qusetionId,
+                interviewId,
+                question,
+                1,
+                false,
+                now
+        );
+        interviewQuestionMapper.insert(interviewQuestion);
     }
 
 
