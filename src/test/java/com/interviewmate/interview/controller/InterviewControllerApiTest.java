@@ -3,11 +3,8 @@ package com.interviewmate.interview.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.interviewmate.exception.InterviewNotFoundException;
 import com.interviewmate.interview.controller.dto.InterviewRequest;
-import com.interviewmate.interview.controller.dto.InterviewResponse;
-import com.interviewmate.interview.controller.dto.QuestionResponse;
-import com.interviewmate.interview.repository.InterviewMapper;
-import com.interviewmate.interview.repository.InterviewQuestionMapper;
-import com.interviewmate.interview.repository.UserMapper;
+import com.interviewmate.interview.domain.Feedback;
+import com.interviewmate.interview.repository.*;
 import com.interviewmate.interview.service.InterviewService;
 import com.interviewmate.interview.service.model.InterviewOutput;
 import org.junit.jupiter.api.Test;
@@ -19,7 +16,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -47,6 +43,12 @@ class InterviewControllerApiTest {
 
     @MockBean
     private InterviewQuestionMapper interviewQuestionMapper;
+
+    @MockBean
+    private AnswerMapper answerMapper;
+
+    @MockBean
+    private FeedbackMapper feedbackMapper;
 
     @Test
     void createInterview_API정상호출() throws Exception {
@@ -143,6 +145,23 @@ class InterviewControllerApiTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").value("Bad Request"))
                 .andExpect(jsonPath("$.message").value("해당 interviewId에 대한 정보가 없습니다."))
+                .andExpect(jsonPath("$.status_code").value(400));
+    }
+
+    @Test
+    void createInterview_topic이_null이면_400에러() throws Exception {
+
+        InterviewRequest request = InterviewRequest.builder()
+                .userId("user-123")
+                .topic(null)
+                .build();
+
+        mockMvc.perform(post("/api/interviews")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.message").value("면접 주제는 필수입니다."))
                 .andExpect(jsonPath("$.status_code").value(400));
     }
 }

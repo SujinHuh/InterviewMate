@@ -1,15 +1,15 @@
 package com.interviewmate.interview.controller;
 
 import com.interviewmate.exception.InterviewCreationException;
-import com.interviewmate.interview.controller.dto.InterviewRequest;
-import com.interviewmate.interview.controller.dto.InterviewResponse;
-import com.interviewmate.interview.controller.dto.QuestionResponse;
+import com.interviewmate.interview.controller.dto.*;
 import com.interviewmate.interview.service.InterviewService;
 import com.interviewmate.interview.service.model.InterviewInput;
 import com.interviewmate.interview.service.model.InterviewOutput;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.net.URI;
 
 @RestController
 @RequestMapping("/api/interviews")
@@ -49,5 +49,21 @@ public class InterviewController {
         QuestionResponse response = new QuestionResponse(question);
 
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{interviewId}/questions/{questionId}/answers")
+    public ResponseEntity<AnswerResponse> saveAnswer(@PathVariable String interviewId, @PathVariable String questionId, @Valid @RequestBody AnswerRequest answerRequest) {
+
+        String answerId = interviewService.submitAnswer(interviewId, questionId, answerRequest);
+
+        String feedbackId = interviewService.saveFeedback(answerId);
+
+        URI location = URI.create("/api/interviews/" + interviewId
+                + "/questions/" + questionId
+                + "/answers/" + answerId);
+
+        return ResponseEntity
+                .created(location)
+                .body(new AnswerResponse(answerId));
     }
 }
