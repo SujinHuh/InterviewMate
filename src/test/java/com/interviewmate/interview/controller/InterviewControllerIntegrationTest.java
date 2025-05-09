@@ -1,10 +1,10 @@
 package com.interviewmate.interview.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.interviewmate.interview.controller.dto.InterviewRequest;
-import com.interviewmate.interview.controller.dto.InterviewResponse;
-import com.interviewmate.interview.controller.dto.QuestionResponse;
+import com.interviewmate.interview.controller.dto.*;
+import com.interviewmate.interview.domain.Feedback;
 import com.interviewmate.interview.domain.User;
+import com.interviewmate.interview.repository.FeedbackMapper;
 import com.interviewmate.interview.repository.InterviewMapper;
 import com.interviewmate.interview.repository.UserMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,6 +13,7 @@ import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.Sql.ExecutionPhase;
 import org.springframework.test.web.servlet.MockMvc;
@@ -38,6 +39,11 @@ class InterviewControllerIntegrationTest {
 
     @Autowired
     private InterviewMapper interviewMapper;
+
+    @Autowired
+    private FeedbackMapper feedbackMapper;
+
+    private final String userId = "user-123";
 
     @BeforeEach
     void setUp() {
@@ -102,5 +108,67 @@ class InterviewControllerIntegrationTest {
         assertThat(question).isNotNull();
         assertThat(question).isNotBlank();
         assertThat(question.toLowerCase()).contains(topic);
+    }
+
+    @Test
+    void endToEndTest_답변과피드백까지정상작동() throws Exception {
+
+        String topic = "spring";
+
+        InterviewRequest request = InterviewRequest.builder()
+                .userId(userId)
+                .topic(topic)
+                .build();
+
+        var mvcResult = mockMvc.perform(post("/api/interviews")
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+
+        String json = mvcResult.getResponse().getContentAsString();
+
+        InterviewResponse resp = objectMapper.readValue(json, InterviewResponse.class);
+
+        String interviewId = resp.getInterviewId();
+
+        String url = "/api/interviews/" + interviewId + "/questions";
+
+        var createQuestion = mockMvc.perform(post(url))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String questionJson = createQuestion.getResponse().getContentAsString();
+        QuestionResponse questionResponse = objectMapper.readValue(questionJson, QuestionResponse.class);
+        String questionId = questionResponse.getId();
+
+        AnswerRequest answerRequest = new AnswerRequest(
+                "user-123",
+                "HTTPS는 HTTP보다 보안성이 강화된 프로토콜입니다."
+        );
+
+        String endToEndUrl = "/api/interviews/" + interviewId + "/questions/" + questionId + "/answers";
+
+        var createAnswer = mockMvc.perform(post(endToEndUrl)
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(answerRequest)))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        String answerJson = createAnswer.getResponse().getContentAsString();
+        AnswerResponse answerResponse = objectMapper.readValue(answerJson, AnswerResponse.class);
+        String answerId = answerResponse.getAnswerId();
+
+        assertThat(answerId).isNotNull();
+        assertThat(answerId).isNotBlank();
+
+        Feedback feedback = feedbackMapper.findByAnswerId(answerId);
+        assertThat(feedback).isNotNull();
+
+        assertThat(feedback.perAnswerFeedback()).contains("HTTPS");
+        assertThat(feedback.perAnswerFeedback()).isNotNull();
+        assertThat(feedback.perAnswerFeedback()).isNotBlank();
+
     }
 }
