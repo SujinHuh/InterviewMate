@@ -2,6 +2,7 @@ package com.interviewmate.interview.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.interviewmate.exception.InterviewNotFoundException;
+import com.interviewmate.interview.controller.dto.AnswerRequest;
 import com.interviewmate.interview.controller.dto.InterviewRequest;
 import com.interviewmate.interview.domain.Feedback;
 import com.interviewmate.interview.repository.*;
@@ -163,5 +164,25 @@ class InterviewControllerApiTest {
                 .andExpect(jsonPath("$.error").value("Bad Request"))
                 .andExpect(jsonPath("$.message").value("면접 주제는 필수입니다."))
                 .andExpect(jsonPath("$.status_code").value(400));
+    }
+
+    @Test
+    void saveAnswer_정상동작_답변과피드백ID반환() throws Exception {
+
+        AnswerRequest request = new AnswerRequest(
+                "user-123",
+                "HTTPS는 HTTP보다 보안성이 강화된 프로토콜입니다."
+        );
+
+
+        given(interviewService.submitAnswer(any(), any(), any())).willReturn("answer-123");
+        given(interviewService.saveFeedback(any())).willReturn("feedback-456");
+
+
+        mockMvc.perform(post("/api/interviews/interview-1/questions/question-1/answers")
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.answerId").value("answer-123"));
     }
 }

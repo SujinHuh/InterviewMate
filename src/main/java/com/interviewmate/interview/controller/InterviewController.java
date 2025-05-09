@@ -6,6 +6,7 @@ import com.interviewmate.interview.service.InterviewService;
 import com.interviewmate.interview.service.model.InterviewInput;
 import com.interviewmate.interview.service.model.InterviewOutput;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -44,19 +45,20 @@ public class InterviewController {
 
         String question = interviewService.generateQuestion(topic);
 
-        interviewService.saveQuestion(interviewId, question);
+        String questionId = interviewService.saveQuestion(interviewId, question);
 
-        QuestionResponse response = new QuestionResponse(question);
+        QuestionResponse response = new QuestionResponse(questionId,question);
 
         return ResponseEntity.ok(response);
     }
 
     @PostMapping("/{interviewId}/questions/{questionId}/answers")
-    public ResponseEntity<AnswerResponse> saveAnswer(@PathVariable String interviewId, @PathVariable String questionId, @Valid @RequestBody AnswerRequest answerRequest) {
+    @ResponseStatus(HttpStatus.CREATED)
+    public ResponseEntity<AnswerResponse> submitAnswerAndFeedback(@PathVariable String interviewId, @PathVariable String questionId, @Valid @RequestBody AnswerRequest answerRequest) {
 
         String answerId = interviewService.submitAnswer(interviewId, questionId, answerRequest);
 
-        String feedbackId = interviewService.saveFeedback(answerId);
+        String feedbackId = generateFeedbackFor(answerId);
 
         URI location = URI.create("/api/interviews/" + interviewId
                 + "/questions/" + questionId
@@ -65,5 +67,8 @@ public class InterviewController {
         return ResponseEntity
                 .created(location)
                 .body(new AnswerResponse(answerId));
+    }
+    private String generateFeedbackFor(String answerId) {
+        return interviewService.saveFeedback(answerId);
     }
 }

@@ -13,7 +13,7 @@ public interface InterviewService {
 
     String getTopicByInterviewId(String interviewId);
 
-    void saveQuestion(String interviewId, String question);
+    String saveQuestion(String interviewId, String question);
 
     String submitAnswer(String interviewId, String questionId, AnswerRequest answer);
 

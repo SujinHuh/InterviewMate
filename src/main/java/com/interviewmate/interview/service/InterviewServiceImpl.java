@@ -1,6 +1,5 @@
 package com.interviewmate.interview.service;
 
-
 import com.interviewmate.interview.controller.dto.AnswerRequest;
 import com.interviewmate.interview.domain.Answer;
 import com.interviewmate.interview.domain.Feedback;
@@ -89,7 +88,7 @@ public class InterviewServiceImpl implements InterviewService {
     }
 
     @Override
-    public void saveQuestion(String interviewId, String question) {
+    public String saveQuestion(String interviewId, String question) {
 
         String qusetionId = UUID.randomUUID().toString();
 
@@ -104,6 +103,8 @@ public class InterviewServiceImpl implements InterviewService {
                 now
         );
         interviewQuestionMapper.insert(interviewQuestion);
+
+        return qusetionId;
     }
 
     @Override
@@ -114,7 +115,7 @@ public class InterviewServiceImpl implements InterviewService {
         Answer answer = new Answer(
                 answerId,
                 questionId,
-                answerRequest.getAnswer(),
+                answerRequest.content(),
                 LocalDateTime.now(),
                 true
         );

@@ -2,7 +2,9 @@ package com.interviewmate.interview.service;
 
 import com.interviewmate.interview.controller.dto.AnswerRequest;
 import com.interviewmate.interview.domain.Answer;
+import com.interviewmate.interview.domain.Feedback;
 import com.interviewmate.interview.repository.AnswerMapper;
+import com.interviewmate.interview.repository.FeedbackMapper;
 import com.interviewmate.interview.repository.InterviewMapper;
 import com.interviewmate.interview.service.gpt.GptClient;
 import com.interviewmate.interview.service.model.*;
@@ -13,11 +15,14 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDateTime;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class InterviewServiceTest {
@@ -30,6 +35,9 @@ class InterviewServiceTest {
     private InterviewServiceImpl interviewService;
     @Mock
     private InterviewMapper interviewMapper;
+
+    @Mock
+    private FeedbackMapper feedbackMapper;
 
     @Test
     void createInterview_200_OK() {
@@ -79,7 +87,7 @@ class InterviewServiceTest {
 
         String interviewId = "intv-123";
         String questionId = "q-456";
-        AnswerRequest answerRequest = new AnswerRequest("사용자 답변 내용");
+        AnswerRequest answerRequest = new AnswerRequest("user-123","사용자 답변 내용");
 
         String answerId = interviewService.submitAnswer(interviewId, questionId, answerRequest);
 
@@ -90,8 +98,40 @@ class InterviewServiceTest {
 
         Answer saved = captor.getValue();
 
-        assertEquals(questionId,saved.questionId());
-        assertEquals(answerRequest.getAnswer(),saved.content());
+        assertEquals(questionId, saved.questionId());
+        assertEquals(answerRequest.content(), saved.content());
     }
+    @Test
+    void saveFeedback_givenValidAnswerId_fetchesAnswerAndInsertsFeedback() {
 
+        String answerId = "user-123";
+
+        when(answerMapper.findById(answerId))
+                .thenReturn(
+                        new Answer(
+                                answerId,
+                                "q-1",
+                                "HTTP와 HTTPS 가 있습니다",
+                                LocalDateTime.now(),
+                                true
+                        )
+                );
+
+        AiChatMessage message = new AiChatMessage("AI 요약 피드백입니다");
+        AiChatResult result = new AiChatResult(message);
+        AiChatResponse response = new AiChatResponse(result);
+        when(gptClient.generate(anyList())).thenReturn(response);
+
+        String saveFeedback = interviewService.saveFeedback(answerId);
+
+        verify(gptClient).generate(anyList());
+
+        ArgumentCaptor<Feedback> captor = ArgumentCaptor.forClass(Feedback.class);
+        verify(feedbackMapper).insert(captor.capture());
+
+        Feedback saved = captor.getValue();
+        assertEquals("AI 요약 피드백입니다", saved.perAnswerFeedback());
+
+        assertNotNull(saveFeedback);
+    }
 }
