@@ -58,17 +58,16 @@ public class InterviewController {
 
         String answerId = interviewService.submitAnswer(interviewId, questionId, answerRequest);
 
-        String feedbackId = generateFeedbackFor(answerId);
-
-        URI location = URI.create("/api/interviews/" + interviewId
-                + "/questions/" + questionId
-                + "/answers/" + answerId);
+        URI location = buildAnswerLocation(interviewId, questionId, answerId);
 
         return ResponseEntity
                 .created(location)
                 .body(new AnswerResponse(answerId));
     }
-    private String generateFeedbackFor(String answerId) {
-        return interviewService.saveFeedback(answerId);
+
+    private URI buildAnswerLocation(String interviewId, String questionId, String answerId) {
+        return URI.create("/api/interviews/" + interviewId
+                + "/questions/" + questionId
+                + "/answers/" + answerId);
     }
 }
