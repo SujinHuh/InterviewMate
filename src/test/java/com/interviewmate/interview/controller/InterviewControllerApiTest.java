@@ -2,12 +2,10 @@ package com.interviewmate.interview.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.interviewmate.exception.InterviewNotFoundException;
+import com.interviewmate.interview.controller.dto.AnswerRequest;
 import com.interviewmate.interview.controller.dto.InterviewRequest;
-import com.interviewmate.interview.controller.dto.InterviewResponse;
-import com.interviewmate.interview.controller.dto.QuestionResponse;
-import com.interviewmate.interview.repository.InterviewMapper;
-import com.interviewmate.interview.repository.InterviewQuestionMapper;
-import com.interviewmate.interview.repository.UserMapper;
+import com.interviewmate.interview.domain.Feedback;
+import com.interviewmate.interview.repository.*;
 import com.interviewmate.interview.service.InterviewService;
 import com.interviewmate.interview.service.model.InterviewOutput;
 import org.junit.jupiter.api.Test;
@@ -19,7 +17,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -47,6 +44,12 @@ class InterviewControllerApiTest {
 
     @MockBean
     private InterviewQuestionMapper interviewQuestionMapper;
+
+    @MockBean
+    private AnswerMapper answerMapper;
+
+    @MockBean
+    private FeedbackMapper feedbackMapper;
 
     @Test
     void createInterview_API정상호출() throws Exception {
@@ -144,5 +147,42 @@ class InterviewControllerApiTest {
                 .andExpect(jsonPath("$.error").value("Bad Request"))
                 .andExpect(jsonPath("$.message").value("해당 interviewId에 대한 정보가 없습니다."))
                 .andExpect(jsonPath("$.status_code").value(400));
+    }
+
+    @Test
+    void createInterview_topic이_null이면_400에러() throws Exception {
+
+        InterviewRequest request = InterviewRequest.builder()
+                .userId("user-123")
+                .topic(null)
+                .build();
+
+        mockMvc.perform(post("/api/interviews")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.message").value("면접 주제는 필수입니다."))
+                .andExpect(jsonPath("$.status_code").value(400));
+    }
+
+    @Test
+    void saveAnswer_정상동작_답변과피드백ID반환() throws Exception {
+
+        AnswerRequest request = new AnswerRequest(
+                "user-123",
+                "HTTPS는 HTTP보다 보안성이 강화된 프로토콜입니다."
+        );
+
+
+        given(interviewService.submitAnswer(any(), any(), any())).willReturn("answer-123");
+        given(interviewService.saveFeedback(any())).willReturn("feedback-456");
+
+
+        mockMvc.perform(post("/api/interviews/interview-1/questions/question-1/answers")
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.answerId").value("answer-123"));
     }
 }
