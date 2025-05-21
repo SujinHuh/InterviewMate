@@ -1,15 +1,16 @@
 package com.interviewmate.interview.controller;
 
 import com.interviewmate.exception.InterviewCreationException;
-import com.interviewmate.interview.controller.dto.InterviewRequest;
-import com.interviewmate.interview.controller.dto.InterviewResponse;
-import com.interviewmate.interview.controller.dto.QuestionResponse;
+import com.interviewmate.interview.controller.dto.*;
 import com.interviewmate.interview.service.InterviewService;
 import com.interviewmate.interview.service.model.InterviewInput;
 import com.interviewmate.interview.service.model.InterviewOutput;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.net.URI;
 
 @RestController
 @RequestMapping("/api/interviews")
@@ -44,10 +45,29 @@ public class InterviewController {
 
         String question = interviewService.generateQuestion(topic);
 
-        interviewService.saveQuestion(interviewId, question);
+        String questionId = interviewService.saveQuestion(interviewId, question);
 
-        QuestionResponse response = new QuestionResponse(question);
+        QuestionResponse response = new QuestionResponse(questionId,question);
 
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{interviewId}/questions/{questionId}/answers")
+    @ResponseStatus(HttpStatus.CREATED)
+    public ResponseEntity<AnswerResponse> submitAnswerAndFeedback(@PathVariable String interviewId, @PathVariable String questionId, @Valid @RequestBody AnswerRequest answerRequest) {
+
+        String answerId = interviewService.submitAnswer(interviewId, questionId, answerRequest);
+
+        URI location = buildAnswerLocation(interviewId, questionId, answerId);
+
+        return ResponseEntity
+                .created(location)
+                .body(new AnswerResponse(answerId));
+    }
+
+    private URI buildAnswerLocation(String interviewId, String questionId, String answerId) {
+        return URI.create("/api/interviews/" + interviewId
+                + "/questions/" + questionId
+                + "/answers/" + answerId);
     }
 }

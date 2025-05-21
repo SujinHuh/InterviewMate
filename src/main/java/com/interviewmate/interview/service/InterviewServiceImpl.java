@@ -1,8 +1,12 @@
 package com.interviewmate.interview.service;
 
-
+import com.interviewmate.interview.controller.dto.AnswerRequest;
+import com.interviewmate.interview.domain.Answer;
+import com.interviewmate.interview.domain.Feedback;
 import com.interviewmate.interview.domain.Interview;
 import com.interviewmate.interview.domain.InterviewQuestion;
+import com.interviewmate.interview.repository.AnswerMapper;
+import com.interviewmate.interview.repository.FeedbackMapper;
 import com.interviewmate.interview.repository.InterviewMapper;
 import com.interviewmate.interview.repository.InterviewQuestionMapper;
 import com.interviewmate.interview.service.gpt.GptClient;
@@ -16,6 +20,7 @@ import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -25,6 +30,8 @@ public class InterviewServiceImpl implements InterviewService {
     private final GptClient gptClient;
     private final InterviewMapper interviewMapper;
     private final InterviewQuestionMapper interviewQuestionMapper;
+    private final AnswerMapper answerMapper;
+    private final FeedbackMapper feedbackMapper;
 
     @Override
     public InterviewOutput createInterview(InterviewInput input) {
@@ -81,7 +88,7 @@ public class InterviewServiceImpl implements InterviewService {
     }
 
     @Override
-    public void saveQuestion(String interviewId, String question) {
+    public String saveQuestion(String interviewId, String question) {
 
         String qusetionId = UUID.randomUUID().toString();
 
@@ -96,6 +103,47 @@ public class InterviewServiceImpl implements InterviewService {
                 now
         );
         interviewQuestionMapper.insert(interviewQuestion);
+
+        return qusetionId;
+    }
+
+    @Override
+    public String submitAnswer(String interviewId, String questionId, AnswerRequest answerRequest) {
+
+        String answerId = UUID.randomUUID().toString();
+
+        Answer answer = new Answer(
+                answerId,
+                questionId,
+                answerRequest.content(),
+                LocalDateTime.now(),
+                true
+        );
+        answerMapper.insert(answer);
+
+        return answerId;
+    }
+
+    @Override
+    public String saveFeedback(String answerId) {
+
+        Answer answer = answerMapper.findById(answerId);
+
+        String feedbackContent = generateFeedback(answer.content());
+
+        String feedbackId = UUID.randomUUID().toString();
+
+        Feedback feedback = new Feedback(
+                feedbackId,
+                answerId,
+                feedbackContent,
+                0,
+                null,
+                LocalDateTime.now()
+        );
+        feedbackMapper.insert(feedback);
+
+        return feedbackId;
     }
 
 
