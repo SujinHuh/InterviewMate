@@ -18,6 +18,9 @@ import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -32,6 +35,7 @@ public class InterviewServiceImpl implements InterviewService {
     private final InterviewQuestionMapper interviewQuestionMapper;
     private final AnswerMapper answerMapper;
     private final FeedbackMapper feedbackMapper;
+    private static final Logger logger = LoggerFactory.getLogger(InterviewServiceImpl.class);
 
     @Override
     public InterviewOutput createInterview(InterviewInput input) {
@@ -50,7 +54,11 @@ public class InterviewServiceImpl implements InterviewService {
                 now
         );
 
+        long start = System.currentTimeMillis();
         interviewMapper.insert(interview);
+        long elapsed = System.currentTimeMillis() - start;
+        logger.info("⏱️ interview 저장 시간: {}ms", elapsed);
+
         return new InterviewOutput(generatedId, input.getTopic());
     }
 
@@ -62,7 +70,11 @@ public class InterviewServiceImpl implements InterviewService {
                         "질문은 명확하고 기술적인 관점에서 작성해줘."),
                 new UserMessage("주제: " + topic)
         );
+        long gptStart = System.currentTimeMillis();
         AiChatResponse response = gptClient.generate(messages);
+        long gptElapsed = System.currentTimeMillis() - gptStart;
+        logger.info("🌐 GPT 질문 생성 시간: {}ms", gptElapsed);
+
         return response.result().output().content();
     }
 
@@ -75,7 +87,10 @@ public class InterviewServiceImpl implements InterviewService {
                         "각 항목별로 1~2문장 이내로, 지원자가 성장할 수 있도록 구체적이고 긍정적인 언어로 작성해줘.\n"),
                 new UserMessage("답변 : " + answer)
         );
+        long start = System.currentTimeMillis();
         AiChatResponse response = gptClient.generate(messages);
+        long elapsed = System.currentTimeMillis() - start;
+        logger.info("⏱️ GPT 피드백 생성 시간: {}ms", elapsed);
         return response.result().output().content();
     }
 
@@ -102,7 +117,10 @@ public class InterviewServiceImpl implements InterviewService {
                 false,
                 now
         );
+        long start = System.currentTimeMillis();
         interviewQuestionMapper.insert(interviewQuestion);
+        long elapsed = System.currentTimeMillis() - start;
+        logger.info("🗃️ question 저장 시간: {}ms", elapsed);
 
         return qusetionId;
     }
@@ -119,7 +137,11 @@ public class InterviewServiceImpl implements InterviewService {
                 LocalDateTime.now(),
                 true
         );
+
+        long start = System.currentTimeMillis();
         answerMapper.insert(answer);
+        long elapsed = System.currentTimeMillis() - start;
+        logger.info("🗃️ answer 저장 시간: {}ms", elapsed);
 
         return answerId;
     }
@@ -129,9 +151,13 @@ public class InterviewServiceImpl implements InterviewService {
 
         Answer answer = answerMapper.findById(answerId);
 
+        long gptStart = System.currentTimeMillis();
         String feedbackContent = generateFeedback(answer.content());
+        long gptElapsed = System.currentTimeMillis() - gptStart;
+        logger.info("⏱️ GPT 피드백 생성 시간: {}ms", gptElapsed);
 
         String feedbackId = UUID.randomUUID().toString();
+
 
         Feedback feedback = new Feedback(
                 feedbackId,
@@ -141,7 +167,11 @@ public class InterviewServiceImpl implements InterviewService {
                 null,
                 LocalDateTime.now()
         );
+
+        long dbStart = System.currentTimeMillis();
         feedbackMapper.insert(feedback);
+        long dbElapsed = System.currentTimeMillis() - dbStart;
+        logger.info("🗃️ feedback 저장 시간: {}ms", dbElapsed);
 
         return feedbackId;
     }
