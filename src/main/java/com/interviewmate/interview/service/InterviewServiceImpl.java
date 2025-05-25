@@ -20,6 +20,7 @@ import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 
 import java.sql.Timestamp;
@@ -57,7 +58,7 @@ public class InterviewServiceImpl implements InterviewService {
         long start = System.currentTimeMillis();
         interviewMapper.insert(interview);
         long elapsed = System.currentTimeMillis() - start;
-        logger.info("⏱️ interview 저장 시간: {}ms", elapsed);
+        MDC.put("dbElapsed", String.valueOf(elapsed));
 
         return new InterviewOutput(generatedId, input.getTopic());
     }
@@ -73,7 +74,7 @@ public class InterviewServiceImpl implements InterviewService {
         long gptStart = System.currentTimeMillis();
         AiChatResponse response = gptClient.generate(messages);
         long gptElapsed = System.currentTimeMillis() - gptStart;
-        logger.info("🌐 GPT 질문 생성 시간: {}ms", gptElapsed);
+        MDC.put("gptElapsed", String.valueOf(gptElapsed));
 
         return response.result().output().content();
     }
@@ -90,16 +91,22 @@ public class InterviewServiceImpl implements InterviewService {
         long start = System.currentTimeMillis();
         AiChatResponse response = gptClient.generate(messages);
         long elapsed = System.currentTimeMillis() - start;
-        logger.info("⏱️ GPT 피드백 생성 시간: {}ms", elapsed);
+        MDC.put("gptElapsed", String.valueOf(elapsed));
         return response.result().output().content();
     }
 
     @Override
     public String getTopicByInterviewId(String interviewId) {
 
+        long start = System.currentTimeMillis();
+
         Interview interview = interviewMapper.findById(interviewId);
 
+        long dbElapsed = System.currentTimeMillis() - start;
+        MDC.put("dbElapsed", String.valueOf(dbElapsed));
+
         return interview.topic();
+
     }
 
     @Override
@@ -120,7 +127,7 @@ public class InterviewServiceImpl implements InterviewService {
         long start = System.currentTimeMillis();
         interviewQuestionMapper.insert(interviewQuestion);
         long elapsed = System.currentTimeMillis() - start;
-        logger.info("🗃️ question 저장 시간: {}ms", elapsed);
+        MDC.put("dbElapsed", String.valueOf(elapsed));
 
         return qusetionId;
     }
@@ -141,7 +148,7 @@ public class InterviewServiceImpl implements InterviewService {
         long start = System.currentTimeMillis();
         answerMapper.insert(answer);
         long elapsed = System.currentTimeMillis() - start;
-        logger.info("🗃️ answer 저장 시간: {}ms", elapsed);
+        MDC.put("dbElapsed", String.valueOf(elapsed));
 
         return answerId;
     }
@@ -154,7 +161,7 @@ public class InterviewServiceImpl implements InterviewService {
         long gptStart = System.currentTimeMillis();
         String feedbackContent = generateFeedback(answer.content());
         long gptElapsed = System.currentTimeMillis() - gptStart;
-        logger.info("⏱️ GPT 피드백 생성 시간: {}ms", gptElapsed);
+        MDC.put("gptElapsed", String.valueOf(gptElapsed));
 
         String feedbackId = UUID.randomUUID().toString();
 
@@ -171,7 +178,7 @@ public class InterviewServiceImpl implements InterviewService {
         long dbStart = System.currentTimeMillis();
         feedbackMapper.insert(feedback);
         long dbElapsed = System.currentTimeMillis() - dbStart;
-        logger.info("🗃️ feedback 저장 시간: {}ms", dbElapsed);
+        MDC.put("dbElapsed", String.valueOf(dbElapsed));
 
         return feedbackId;
     }
