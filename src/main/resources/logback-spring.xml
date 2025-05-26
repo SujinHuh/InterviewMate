@@ -1,11 +1,19 @@
 <configuration>
 
     <appender name="Console" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder>
-            <pattern>
-                %d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %highlight(%-5level) %logger{36} -
-                [req=%X{requestId}] [total=%X{total:-0}ms] [db=%X{dbElapsed:-0}ms] [ai=%X{aiElapsed:-0}ms] %msg%n
-            </pattern>
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <timestamp>
+                    <fieldName>timestamp</fieldName>
+                    <pattern>yyyy-MM-dd HH:mm:ss.SSS</pattern>
+                </timestamp>
+                <threadName />
+                <logLevel />
+                <loggerName />
+                <mdc />
+                <message />
+                <stackTrace />
+            </providers>
         </encoder>
     </appender>
 
@@ -15,11 +23,15 @@
             <fileNamePattern>logs/access.%d{yyyy-MM-dd}.log</fileNamePattern>
             <maxHistory>7</maxHistory>
         </rollingPolicy>
-        <encoder>
-            <pattern>
-                %d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} -
-                [req=%X{requestId}] [total=%X{total:-0}ms] [db=%X{dbElapsed:-0}ms] [ai=%X{aiElapsed:-0}ms] %msg%n
-            </pattern>
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <timestamp />
+                <threadName />
+                <logLevel />
+                <loggerName />
+                <mdc />
+                <message />
+            </providers>
         </encoder>
     </appender>
 
@@ -29,25 +41,30 @@
             <fileNamePattern>logs/error.%d{yyyy-MM-dd}.log</fileNamePattern>
             <maxHistory>7</maxHistory>
         </rollingPolicy>
-        <encoder>
-            <pattern>
-                %d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} -
-                [req=%X{requestId}] [total=%X{total:-0}ms] [db=%X{dbElapsed:-0}ms] [ai=%X{aiElapsed:-0}ms] %msg%n%ex{full}
-            </pattern>
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <timestamp />
+                <threadName />
+                <logLevel />
+                <loggerName />
+                <mdc />
+                <message />
+                <stackTrace />
+            </providers>
         </encoder>
     </appender>
 
     <logger name="com.interviewmate" level="INFO" additivity="false">
-        <appender-ref ref="AccessLogFile"/>
-        <appender-ref ref="Console"/>
+        <appender-ref ref="AccessLogFile" />
+        <appender-ref ref="Console" />
     </logger>
 
     <logger name="com.interviewmate.exception" level="ERROR" additivity="false">
-        <appender-ref ref="ErrorLogFile"/>
+        <appender-ref ref="ErrorLogFile" />
     </logger>
 
     <root level="INFO">
-        <appender-ref ref="Console"/>
+        <appender-ref ref="Console" />
     </root>
 
 </configuration>
