@@ -1,23 +1,15 @@
 <configuration>
 
     <appender name="Console" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
-            <providers>
-                <timestamp>
-                    <fieldName>timestamp</fieldName>
-                    <pattern>yyyy-MM-dd HH:mm:ss.SSS</pattern>
-                </timestamp>
-                <threadName />
-                <logLevel />
-                <loggerName />
-                <mdc />
-                <message />
-                <stackTrace />
-            </providers>
+        <encoder>
+            <pattern>
+                %d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n
+            </pattern>
         </encoder>
     </appender>
 
-    <appender name="AccessLogFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <appender name="AccessLogFile"
+              class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>logs/access.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <fileNamePattern>logs/access.%d{yyyy-MM-dd}.log</fileNamePattern>
@@ -25,17 +17,21 @@
         </rollingPolicy>
         <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
             <providers>
-                <timestamp />
-                <threadName />
-                <logLevel />
-                <loggerName />
-                <mdc />
-                <message />
+                <timestamp>
+                    <fieldName>timestamp</fieldName>
+                    <pattern>yyyy-MM-dd HH:mm:ss.SSS</pattern>
+                </timestamp>
+                <threadName/>
+                <logLevel/>
+                <loggerName/>
+                <mdc/>
+                <message/>
             </providers>
         </encoder>
     </appender>
 
-    <appender name="ErrorLogFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <appender name="ErrorLogFile"
+              class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>logs/error.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <fileNamePattern>logs/error.%d{yyyy-MM-dd}.log</fileNamePattern>
@@ -43,28 +39,35 @@
         </rollingPolicy>
         <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
             <providers>
-                <timestamp />
-                <threadName />
-                <logLevel />
-                <loggerName />
-                <mdc />
-                <message />
-                <stackTrace />
+                <timestamp/>
+                <threadName/>
+                <logLevel/>
+                <loggerName/>
+                <mdc/>
+                <message/>
+                <stackTrace/>
             </providers>
         </encoder>
     </appender>
 
-    <logger name="com.interviewmate" level="INFO" additivity="false">
-        <appender-ref ref="AccessLogFile" />
-        <appender-ref ref="Console" />
+
+    <logger name="com.interviewmate"
+            level="INFO"
+            additivity="false">
+        <appender-ref ref="AccessLogFile"/>
+        <appender-ref ref="Console"/>
     </logger>
 
-    <logger name="com.interviewmate.exception" level="ERROR" additivity="false">
-        <appender-ref ref="ErrorLogFile" />
+
+    <logger name="com.interviewmate.exception"
+            level="ERROR"
+            additivity="false">
+        <appender-ref ref="ErrorLogFile"/>
+        <appender-ref ref="Console"/>
     </logger>
 
     <root level="INFO">
-        <appender-ref ref="Console" />
+        <appender-ref ref="Console"/>
     </root>
 
 </configuration>

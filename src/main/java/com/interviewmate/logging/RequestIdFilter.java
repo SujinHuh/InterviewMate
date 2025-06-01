@@ -16,6 +16,10 @@ import java.util.UUID;
 public class RequestIdFilter extends OncePerRequestFilter {
 
     private static final String REQUEST_ID_KEY = "requestId";
+    private static final String TOTAL_KEY = "total";
+    private static final String DB_KEY = "dbElapsed";
+    private static final String AI_KEY = "aiElapsed";
+
     private static final Logger logger = org.slf4j.LoggerFactory.getLogger(RequestIdFilter.class);
 
     @Override
@@ -27,24 +31,35 @@ public class RequestIdFilter extends OncePerRequestFilter {
         String requestId = UUID.randomUUID().toString();
         MDC.put(REQUEST_ID_KEY, requestId);
 
-        logger.info("Filter 동작 확인 – URI: {}", request.getRequestURI());
+        logger.info("Filter 진입 – URI: {}", request.getRequestURI());
 
-        long start = System.currentTimeMillis();
+        long startTime = System.currentTimeMillis();
 
         try {
             filterChain.doFilter(request, response);
+
         } finally {
-            long totalElapsed = System.currentTimeMillis() - start;
+            long totalElapsed = System.currentTimeMillis() - startTime;
+            MDC.put(TOTAL_KEY, String.valueOf(totalElapsed));
 
-            MDC.put(REQUEST_ID_KEY, requestId);
-            MDC.put("total",  String.valueOf(totalElapsed));
-            MDC.put("dbElapsed", MDC.get("dbElapsed"));
-            MDC.put("aiElapsed", MDC.get("aiElapsed"));
+            String dbElapsedValue = MDC.get(DB_KEY);
+            String aiElapsedValue = MDC.get(AI_KEY);
+            if (dbElapsedValue == null) {
+                MDC.put(DB_KEY, "0");
+            }
+            if (aiElapsedValue == null) {
+                MDC.put(AI_KEY, "0");
+            }
 
-            logger.info("요청 완료: method={}, uri={}, status={}",
+
+            logger.info("요청 완료 – method={}, uri={}, status={}, req={}, total={}ms, db={}ms, ai={}ms",
                     request.getMethod(),
                     request.getRequestURI(),
-                    response.getStatus()
+                    response.getStatus(),
+                    requestId,
+                    MDC.get(TOTAL_KEY),
+                    MDC.get(DB_KEY),
+                    MDC.get(AI_KEY)
             );
 
             MDC.clear();
