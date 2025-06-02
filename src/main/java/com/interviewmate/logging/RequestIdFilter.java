@@ -31,7 +31,7 @@ public class RequestIdFilter extends OncePerRequestFilter {
         String requestId = UUID.randomUUID().toString();
         MDC.put(REQUEST_ID_KEY, requestId);
 
-        logger.info("Filter 진입 – URI: {}", request.getRequestURI());
+        logger.info("Filter approach – URI: {}", request.getRequestURI());
 
         long startTime = System.currentTimeMillis();
 
@@ -52,7 +52,7 @@ public class RequestIdFilter extends OncePerRequestFilter {
             }
 
 
-            logger.info("요청 완료 – method={}, uri={}, status={}, req={}, total={}ms, db={}ms, ai={}ms",
+            logger.info("Request completed– method={}, uri={}, status={}, req={}, total={}ms, db={}ms, ai={}ms",
                     request.getMethod(),
                     request.getRequestURI(),
                     response.getStatus(),
