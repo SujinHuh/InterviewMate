@@ -1,10 +1,12 @@
 package com.interviewmate.interview.controller;
 
+import ch.qos.logback.core.model.processor.PhaseIndicator;
 import com.interviewmate.exception.InterviewCreationException;
 import com.interviewmate.interview.controller.dto.*;
 import com.interviewmate.interview.service.InterviewService;
 import com.interviewmate.interview.service.model.InterviewInput;
 import com.interviewmate.interview.service.model.InterviewOutput;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,7 +25,10 @@ public class InterviewController {
     }
 
     @PostMapping
-    public ResponseEntity<InterviewResponse> createInterview(@Valid @RequestBody InterviewRequest request) {
+    @Operation(
+            description = "Start new interview"
+    )
+    public ResponseEntity<InterviewResponseDTO> createInterview(@Valid @RequestBody InterviewRequestDTO request) {
 
         InterviewInput input = new InterviewInput(request.getUserId(), request.getTopic());
 
@@ -33,13 +38,16 @@ public class InterviewController {
             throw new InterviewCreationException("생성된 인터뷰 ID가 null입니다.");
         }
 
-        InterviewResponse response = new InterviewResponse(output.getInterviewId(), output.getTopic());
+        InterviewResponseDTO interviewResponse = new InterviewResponseDTO(output.getInterviewId(), output.getTopic());
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(interviewResponse);
     }
 
     @PostMapping("/{interviewId}/questions")
-    public ResponseEntity<QuestionResponse> createQuestions(@PathVariable String interviewId) {
+    @Operation(
+            description = "Generate interview question"
+    )
+    public ResponseEntity<QuestionResponseDTO> createQuestions(@PathVariable String interviewId) {
 
         String topic = interviewService.getTopicByInterviewId(interviewId);
 
@@ -47,27 +55,41 @@ public class InterviewController {
 
         String questionId = interviewService.saveQuestion(interviewId, question);
 
-        QuestionResponse response = new QuestionResponse(questionId,question);
+        QuestionResponseDTO questionResponse = new QuestionResponseDTO(questionId, question);
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(questionResponse);
     }
 
     @PostMapping("/{interviewId}/questions/{questionId}/answers")
+    @Operation(
+            description = "Submit only answer"
+    )
     @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<AnswerResponse> submitAnswerAndFeedback(@PathVariable String interviewId, @PathVariable String questionId, @Valid @RequestBody AnswerRequest answerRequest) {
+    public ResponseEntity<AnswerResponseDTO> submitAnswerAndFeedback(@PathVariable String interviewId, @PathVariable String questionId, @Valid @RequestBody AnswerRequestDTO answerRequestDTO) {
 
-        String answerId = interviewService.submitAnswer(interviewId, questionId, answerRequest);
+        String answerId = interviewService.submitAnswer(interviewId, questionId, answerRequestDTO);
 
         URI location = buildAnswerLocation(interviewId, questionId, answerId);
 
         return ResponseEntity
                 .created(location)
-                .body(new AnswerResponse(answerId));
+                .body(new AnswerResponseDTO(answerId));
     }
 
     private URI buildAnswerLocation(String interviewId, String questionId, String answerId) {
         return URI.create("/api/interviews/" + interviewId
                 + "/questions/" + questionId
                 + "/answers/" + answerId);
+    }
+
+    @PostMapping("{interviewId}/questions/next")
+    @Operation(
+            description = "Generate next interview question"
+    )
+    public ResponseEntity<QuestionResponseDTO> generateNextQuestion(@PathVariable String interviewId) {
+
+        QuestionResponseDTO nextQuestion = interviewService.generateNextQuestion(interviewId);
+
+        return ResponseEntity.ok(nextQuestion);
     }
 }

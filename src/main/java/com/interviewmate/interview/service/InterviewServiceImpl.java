@@ -1,6 +1,7 @@
 package com.interviewmate.interview.service;
 
-import com.interviewmate.interview.controller.dto.AnswerRequest;
+import com.interviewmate.interview.controller.dto.AnswerRequestDTO;
+import com.interviewmate.interview.controller.dto.QuestionResponseDTO;
 import com.interviewmate.interview.domain.Answer;
 import com.interviewmate.interview.domain.Feedback;
 import com.interviewmate.interview.domain.Interview;
@@ -133,14 +134,14 @@ public class InterviewServiceImpl implements InterviewService {
     }
 
     @Override
-    public String submitAnswer(String interviewId, String questionId, AnswerRequest answerRequest) {
+    public String submitAnswer(String interviewId, String questionId, AnswerRequestDTO answerRequestDTO) {
 
         String answerId = UUID.randomUUID().toString();
 
         Answer answer = new Answer(
                 answerId,
                 questionId,
-                answerRequest.content(),
+                answerRequestDTO.content(),
                 LocalDateTime.now(),
                 true
         );
@@ -183,5 +184,17 @@ public class InterviewServiceImpl implements InterviewService {
         return feedbackId;
     }
 
-
+    @Override
+    public QuestionResponseDTO generateNextQuestion(String interviewId){
+        /**
+         * submitAnswerAndFeedback에서 에서 "직전질문 + 답변 + 피드백"을 가지고 GPT한테 다시 질문을 요청한다.
+         * 1.
+         *  1.1 마지막 질문조회
+         *  1.2 마지막 답변 조회
+         *  1.3 마지막 피드백 조회
+         * 2. 메서드 "꼬리 질문" 메서드로 보내서 질문을 받아온다.
+         *  2.1 질문을 저장한다.
+         *  2.2 질문을 return 한다. */
+        return null;
+    }
 }

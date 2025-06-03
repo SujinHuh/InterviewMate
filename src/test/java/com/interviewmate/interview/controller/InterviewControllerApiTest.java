@@ -2,9 +2,8 @@ package com.interviewmate.interview.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.interviewmate.exception.InterviewNotFoundException;
-import com.interviewmate.interview.controller.dto.AnswerRequest;
-import com.interviewmate.interview.controller.dto.InterviewRequest;
-import com.interviewmate.interview.domain.Feedback;
+import com.interviewmate.interview.controller.dto.AnswerRequestDTO;
+import com.interviewmate.interview.controller.dto.InterviewRequestDTO;
 import com.interviewmate.interview.repository.*;
 import com.interviewmate.interview.service.InterviewService;
 import com.interviewmate.interview.service.model.InterviewOutput;
@@ -53,7 +52,7 @@ class InterviewControllerApiTest {
 
     @Test
     void createInterview_API정상호출() throws Exception {
-        InterviewRequest request = InterviewRequest.builder()
+        InterviewRequestDTO request = InterviewRequestDTO.builder()
                 .userId("user-123")
                 .topic("백엔드 개발")
                 .build();
@@ -78,7 +77,7 @@ class InterviewControllerApiTest {
 
     @Test
     void createInterview_IDNull일때_에러처리() throws Exception {
-        InterviewRequest request = InterviewRequest.builder()
+        InterviewRequestDTO request = InterviewRequestDTO.builder()
                 .userId("user-123")
                 .topic("백엔드 개발")
                 .build();
@@ -104,7 +103,7 @@ class InterviewControllerApiTest {
 
     @Test
     void createInterview_유효성_실패시_400에러() throws Exception {
-        InterviewRequest request = InterviewRequest.builder()
+        InterviewRequestDTO request = InterviewRequestDTO.builder()
                 .userId(null)
                 .topic("백엔드 개발")
                 .build();
@@ -135,7 +134,7 @@ class InterviewControllerApiTest {
                 .willThrow(new InterviewNotFoundException("해당 interviewId에 대한 정보가 없습니다."));
 
         String topic = "spring";
-        InterviewRequest request = InterviewRequest.builder()
+        InterviewRequestDTO request = InterviewRequestDTO.builder()
                 .userId("user-123")
                 .topic(topic)
                 .build();
@@ -152,7 +151,7 @@ class InterviewControllerApiTest {
     @Test
     void createInterview_topic이_null이면_400에러() throws Exception {
 
-        InterviewRequest request = InterviewRequest.builder()
+        InterviewRequestDTO request = InterviewRequestDTO.builder()
                 .userId("user-123")
                 .topic(null)
                 .build();
@@ -169,7 +168,7 @@ class InterviewControllerApiTest {
     @Test
     void saveAnswer_정상동작_답변과피드백ID반환() throws Exception {
 
-        AnswerRequest request = new AnswerRequest(
+        AnswerRequestDTO request = new AnswerRequestDTO(
                 "user-123",
                 "HTTPS는 HTTP보다 보안성이 강화된 프로토콜입니다."
         );
