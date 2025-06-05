@@ -9,17 +9,15 @@ import java.sql.Timestamp;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class QuestionResponse {
+public class QuestionResponseDTO {
     private String id;
     private String content;
     private int questionOrder;
     private boolean isAnswered;
     private Timestamp createdAt;
 
-    public QuestionResponse(String id, String content) {
+    public QuestionResponseDTO(String id, String content) {
         this.id = id;
         this.content = content;
     }
 }
-
-

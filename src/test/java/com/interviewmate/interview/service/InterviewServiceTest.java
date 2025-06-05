@@ -1,6 +1,6 @@
 package com.interviewmate.interview.service;
 
-import com.interviewmate.interview.controller.dto.AnswerRequest;
+import com.interviewmate.interview.controller.dto.AnswerRequestDTO;
 import com.interviewmate.interview.domain.Answer;
 import com.interviewmate.interview.domain.Feedback;
 import com.interviewmate.interview.repository.AnswerMapper;
@@ -87,9 +87,9 @@ class InterviewServiceTest {
 
         String interviewId = "intv-123";
         String questionId = "q-456";
-        AnswerRequest answerRequest = new AnswerRequest("user-123","사용자 답변 내용");
+        AnswerRequestDTO answerRequestDTO = new AnswerRequestDTO("user-123","사용자 답변 내용");
 
-        String answerId = interviewService.submitAnswer(interviewId, questionId, answerRequest);
+        String answerId = interviewService.submitAnswer(interviewId, questionId, answerRequestDTO);
 
         assertNotNull(answerId);
 
@@ -99,7 +99,7 @@ class InterviewServiceTest {
         Answer saved = captor.getValue();
 
         assertEquals(questionId, saved.questionId());
-        assertEquals(answerRequest.content(), saved.content());
+        assertEquals(answerRequestDTO.content(), saved.content());
     }
     @Test
     void saveFeedback_givenValidAnswerId_fetchesAnswerAndInsertsFeedback() {

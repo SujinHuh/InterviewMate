@@ -1,10 +1,8 @@
 package com.interviewmate.interview.service;
 
-import com.interviewmate.interview.controller.dto.AnswerRequest;
-import com.interviewmate.interview.domain.Answer;
-import com.interviewmate.interview.domain.Feedback;
-import com.interviewmate.interview.domain.Interview;
-import com.interviewmate.interview.domain.InterviewQuestion;
+import com.interviewmate.interview.controller.dto.AnswerRequestDTO;
+import com.interviewmate.interview.controller.dto.QuestionResponseDTO;
+import com.interviewmate.interview.domain.*;
 import com.interviewmate.interview.repository.AnswerMapper;
 import com.interviewmate.interview.repository.FeedbackMapper;
 import com.interviewmate.interview.repository.InterviewMapper;
@@ -133,14 +131,14 @@ public class InterviewServiceImpl implements InterviewService {
     }
 
     @Override
-    public String submitAnswer(String interviewId, String questionId, AnswerRequest answerRequest) {
+    public String submitAnswer(String interviewId, String questionId, AnswerRequestDTO answerRequestDTO) {
 
         String answerId = UUID.randomUUID().toString();
 
         Answer answer = new Answer(
                 answerId,
                 questionId,
-                answerRequest.content(),
+                answerRequestDTO.content(),
                 LocalDateTime.now(),
                 true
         );
@@ -183,5 +181,14 @@ public class InterviewServiceImpl implements InterviewService {
         return feedbackId;
     }
 
+    @Override
+    public Question generateNextQuestion(String interviewId) {
 
+        InterviewQuestion lastQuestion = interviewQuestionMapper.findTopByInterviewIdOrderByQuestionOrderDesc(interviewId);
+        //TODO
+        // 기능 구현 - ing
+
+
+        return null;
+    }
 }

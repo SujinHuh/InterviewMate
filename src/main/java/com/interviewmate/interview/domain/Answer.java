@@ -8,5 +8,4 @@ public record Answer(
         String content,
         LocalDateTime submittedAt,
         boolean isSubmitted
-) {
-}
+) {}

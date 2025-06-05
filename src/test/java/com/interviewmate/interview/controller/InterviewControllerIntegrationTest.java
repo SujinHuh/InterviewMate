@@ -13,7 +13,6 @@ import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.Sql.ExecutionPhase;
 import org.springframework.test.web.servlet.MockMvc;
@@ -56,7 +55,7 @@ class InterviewControllerIntegrationTest {
 
     @Test
     void createInterview_DB까지저장확인() throws Exception {
-        InterviewRequest request = InterviewRequest.builder()
+        InterviewRequestDTO request = InterviewRequestDTO.builder()
                 .userId("user-123")
                 .topic("spring")
                 .build();
@@ -68,7 +67,7 @@ class InterviewControllerIntegrationTest {
                 .andReturn();
 
         String json = mvcResult.getResponse().getContentAsString();
-        InterviewResponse resp = objectMapper.readValue(json, InterviewResponse.class);
+        InterviewResponseDTO resp = objectMapper.readValue(json, InterviewResponseDTO.class);
         String interviewId = resp.getInterviewId();
 
         var saved = interviewMapper.findById(interviewId);
@@ -80,7 +79,7 @@ class InterviewControllerIntegrationTest {
     @Test
     void createQuestion_정상동작_인터뷰ID로_질문생성요청() throws Exception {
         String topic = "spring";
-        InterviewRequest request = InterviewRequest.builder()
+        InterviewRequestDTO request = InterviewRequestDTO.builder()
                 .userId("user-123")
                 .topic(topic)
                 .build();
@@ -92,7 +91,7 @@ class InterviewControllerIntegrationTest {
                 .andReturn();
 
         String json = mvcResult.getResponse().getContentAsString();
-        InterviewResponse resp = objectMapper.readValue(json, InterviewResponse.class);
+        InterviewResponseDTO resp = objectMapper.readValue(json, InterviewResponseDTO.class);
         String interviewId = resp.getInterviewId();
 
         String url = "/api/interviews/" + interviewId + "/questions";
@@ -102,7 +101,7 @@ class InterviewControllerIntegrationTest {
                 .andReturn();
 
         String questionResponse = createQuestion.getResponse().getContentAsString();
-        QuestionResponse response = objectMapper.readValue(questionResponse, QuestionResponse.class);
+        QuestionResponseDTO response = objectMapper.readValue(questionResponse, QuestionResponseDTO.class);
 
         String question = response.getContent();
         assertThat(question).isNotNull();
@@ -115,7 +114,7 @@ class InterviewControllerIntegrationTest {
 
         String topic = "spring";
 
-        InterviewRequest request = InterviewRequest.builder()
+        InterviewRequestDTO request = InterviewRequestDTO.builder()
                 .userId(userId)
                 .topic(topic)
                 .build();
@@ -129,7 +128,7 @@ class InterviewControllerIntegrationTest {
 
         String json = mvcResult.getResponse().getContentAsString();
 
-        InterviewResponse resp = objectMapper.readValue(json, InterviewResponse.class);
+        InterviewResponseDTO resp = objectMapper.readValue(json, InterviewResponseDTO.class);
 
         String interviewId = resp.getInterviewId();
 
@@ -140,10 +139,10 @@ class InterviewControllerIntegrationTest {
                 .andReturn();
 
         String questionJson = createQuestion.getResponse().getContentAsString();
-        QuestionResponse questionResponse = objectMapper.readValue(questionJson, QuestionResponse.class);
-        String questionId = questionResponse.getId();
+        QuestionResponseDTO questionResponseDTO = objectMapper.readValue(questionJson, QuestionResponseDTO.class);
+        String questionId = questionResponseDTO.getId();
 
-        AnswerRequest answerRequest = new AnswerRequest(
+        AnswerRequestDTO answerRequestDTO = new AnswerRequestDTO(
                 "user-123",
                 "HTTPS는 HTTP보다 보안성이 강화된 프로토콜입니다."
         );
@@ -152,13 +151,13 @@ class InterviewControllerIntegrationTest {
 
         var createAnswer = mockMvc.perform(post(endToEndUrl)
                         .contentType("application/json")
-                        .content(objectMapper.writeValueAsString(answerRequest)))
+                        .content(objectMapper.writeValueAsString(answerRequestDTO)))
                 .andExpect(status().isCreated())
                 .andReturn();
 
         String answerJson = createAnswer.getResponse().getContentAsString();
-        AnswerResponse answerResponse = objectMapper.readValue(answerJson, AnswerResponse.class);
-        String answerId = answerResponse.getAnswerId();
+        AnswerResponseDTO answerResponseDTO = objectMapper.readValue(answerJson, AnswerResponseDTO.class);
+        String answerId = answerResponseDTO.getAnswerId();
 
         assertThat(answerId).isNotNull();
         assertThat(answerId).isNotBlank();

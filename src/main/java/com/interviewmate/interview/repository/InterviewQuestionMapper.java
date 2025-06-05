@@ -31,4 +31,19 @@ public interface InterviewQuestionMapper {
             ORDER BY question_order
             """)
     List<InterviewQuestion> findByInterviewId(String interviewId);
+
+    @Select("""
+            SELECT
+              id,
+              interview_id     AS interviewId,
+              content,
+              question_order   AS questionOrder,
+              is_answered      AS answered,
+              created_at       AS createdAt
+            FROM questions
+            WHERE interview_id = #{interviewId}
+            ORDER BY question_order DESC
+            LIMIT 1
+            """)
+    InterviewQuestion findTopByInterviewIdOrderByQuestionOrderDesc(String interviewId);
 }

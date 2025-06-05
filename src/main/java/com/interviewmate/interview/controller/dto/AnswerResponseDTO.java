@@ -1,6 +1,5 @@
 package com.interviewmate.interview.controller.dto;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -8,10 +7,10 @@ import lombok.NoArgsConstructor;
 @Getter
 @Builder
 @NoArgsConstructor
-public class AnswerResponse {
+public class AnswerResponseDTO {
 
     private String answerId;
-    public AnswerResponse (String answerId){
+    public AnswerResponseDTO(String answerId){
         this.answerId = answerId;
     }
 }
