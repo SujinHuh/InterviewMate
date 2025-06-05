@@ -1,7 +1,7 @@
 package com.interviewmate.interview.service;
 
 import com.interviewmate.interview.controller.dto.AnswerRequestDTO;
-import com.interviewmate.interview.controller.dto.QuestionResponseDTO;
+import com.interviewmate.interview.domain.Question;
 import com.interviewmate.interview.service.model.InterviewInput;
 import com.interviewmate.interview.service.model.InterviewOutput;
 
@@ -20,5 +20,5 @@ public interface InterviewService {
 
     String saveFeedback(String answerId);
 
-    QuestionResponseDTO generateNextQuestion(String interviewId);
+    Question generateNextQuestion(String interviewId);
 }

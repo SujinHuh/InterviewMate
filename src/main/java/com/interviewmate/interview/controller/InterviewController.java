@@ -3,6 +3,7 @@ package com.interviewmate.interview.controller;
 import ch.qos.logback.core.model.processor.PhaseIndicator;
 import com.interviewmate.exception.InterviewCreationException;
 import com.interviewmate.interview.controller.dto.*;
+import com.interviewmate.interview.domain.Question;
 import com.interviewmate.interview.service.InterviewService;
 import com.interviewmate.interview.service.model.InterviewInput;
 import com.interviewmate.interview.service.model.InterviewOutput;
@@ -88,8 +89,9 @@ public class InterviewController {
     )
     public ResponseEntity<QuestionResponseDTO> generateNextQuestion(@PathVariable String interviewId) {
 
-        QuestionResponseDTO nextQuestion = interviewService.generateNextQuestion(interviewId);
+        Question nextQuestion = interviewService.generateNextQuestion(interviewId);
+        QuestionResponseDTO nextQuestionResponse = new QuestionResponseDTO(nextQuestion.id(), nextQuestion.content());
 
-        return ResponseEntity.ok(nextQuestion);
+        return ResponseEntity.ok(nextQuestionResponse);
     }
 }
