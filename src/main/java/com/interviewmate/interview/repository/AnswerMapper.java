@@ -35,4 +35,16 @@ public interface AnswerMapper {
             WHERE id = #{id}
             """)
     Answer findById(String id);
+
+    @Select("""
+                SELECT 
+                    id,
+                    question_id AS questionId,
+                    content,
+                    created_at AS createdAt,
+                    is_final AS isFinal
+                FROM answers
+                WHERE question_id = #{questionId}
+            """)
+    Answer findByQuestionId(String questionId);
 }

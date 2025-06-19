@@ -39,5 +39,4 @@ public interface FeedbackMapper {
             """)
     Feedback findByAnswerId(String answerId);
 
-
 }

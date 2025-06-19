@@ -3,7 +3,12 @@ package com.interviewmate.interview.controller;
 import ch.qos.logback.core.model.processor.PhaseIndicator;
 import com.interviewmate.exception.InterviewCreationException;
 import com.interviewmate.interview.controller.dto.*;
+import com.interviewmate.interview.domain.Answer;
+import com.interviewmate.interview.domain.Feedback;
+import com.interviewmate.interview.domain.InterviewQuestion;
 import com.interviewmate.interview.domain.Question;
+import com.interviewmate.interview.repository.AnswerMapper;
+import com.interviewmate.interview.repository.FeedbackMapper;
 import com.interviewmate.interview.service.InterviewService;
 import com.interviewmate.interview.service.model.InterviewInput;
 import com.interviewmate.interview.service.model.InterviewOutput;
@@ -20,15 +25,17 @@ import java.net.URI;
 public class InterviewController {
 
     private final InterviewService interviewService;
+    private final FeedbackMapper feedbackMapper;
+    private final AnswerMapper answerMapper;
 
-    public InterviewController(InterviewService interviewService) {
+    public InterviewController(InterviewService interviewService, FeedbackMapper feedbackMapper, AnswerMapper answerMapper) {
         this.interviewService = interviewService;
+        this.feedbackMapper = feedbackMapper;
+        this.answerMapper = answerMapper;
     }
 
     @PostMapping
-    @Operation(
-            description = "Start new interview"
-    )
+    @Operation(description = "Start new interview")
     public ResponseEntity<InterviewResponseDTO> createInterview(@Valid @RequestBody InterviewRequestDTO request) {
 
         InterviewInput input = new InterviewInput(request.getUserId(), request.getTopic());
@@ -45,9 +52,7 @@ public class InterviewController {
     }
 
     @PostMapping("/{interviewId}/questions")
-    @Operation(
-            description = "Generate interview question"
-    )
+    @Operation(description = "Generate interview question")
     public ResponseEntity<QuestionResponseDTO> createQuestions(@PathVariable String interviewId) {
 
         String topic = interviewService.getTopicByInterviewId(interviewId);
@@ -62,9 +67,7 @@ public class InterviewController {
     }
 
     @PostMapping("/{interviewId}/questions/{questionId}/answers")
-    @Operation(
-            description = "Submit only answer"
-    )
+    @Operation(description = "Submit only answer")
     @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<AnswerResponseDTO> submitAnswerAndFeedback(@PathVariable String interviewId, @PathVariable String questionId, @Valid @RequestBody AnswerRequestDTO answerRequestDTO) {
 
@@ -84,13 +87,11 @@ public class InterviewController {
     }
 
     @PostMapping("{interviewId}/questions/next")
-    @Operation(
-            description = "Generate next interview question"
-    )
+    @Operation(description = "Generate next interview question")
     public ResponseEntity<QuestionResponseDTO> generateNextQuestion(@PathVariable String interviewId) {
 
-        Question nextQuestion = interviewService.generateNextQuestion(interviewId);
-        QuestionResponseDTO nextQuestionResponse = new QuestionResponseDTO(nextQuestion.id(), nextQuestion.content());
+        Question question = interviewService.generateNextQuestion(interviewId);
+        QuestionResponseDTO nextQuestionResponse = new QuestionResponseDTO(question.id(), question.content());
 
         return ResponseEntity.ok(nextQuestionResponse);
     }

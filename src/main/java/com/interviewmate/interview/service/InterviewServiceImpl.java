@@ -185,10 +185,26 @@ public class InterviewServiceImpl implements InterviewService {
     public Question generateNextQuestion(String interviewId) {
 
         InterviewQuestion lastQuestion = interviewQuestionMapper.findTopByInterviewIdOrderByQuestionOrderDesc(interviewId);
-        //TODO
-        // 기능 구현 - ing
 
+        if (lastQuestion == null) throw new IllegalStateException("이전 질문이 존재하지 않습니다.");
 
+        Answer lastAnswer = answerMapper.findByQuestionId(lastQuestion.getId());
+        if (lastAnswer == null) throw new IllegalStateException("이전 질문에 대한 답변이 존재하지 않습니다.");
+
+        Feedback feedback = feedbackMapper.findByAnswerId(lastAnswer.id());
+        if (feedback == null) throw new IllegalStateException("피드백이 존재하지 않습니다.");
+
+        // 4. 프롬프트 구성 (Message 리스트 반환)
+
+        // 5. GPT 호출 → 질문 생성
+
+        // 6. 다음 질문 순서 계산
+
+        // 7. 인터뷰 질문 도메인 객체 생성
+
+        // 8. DB 저장
+
+        // 9. 도메인 객체로 반환
         return null;
     }
 }
