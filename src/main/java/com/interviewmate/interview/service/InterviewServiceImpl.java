@@ -7,6 +7,7 @@ import com.interviewmate.interview.repository.AnswerMapper;
 import com.interviewmate.interview.repository.FeedbackMapper;
 import com.interviewmate.interview.repository.InterviewMapper;
 import com.interviewmate.interview.repository.InterviewQuestionMapper;
+import com.interviewmate.interview.service.gpt.AiPromptBuilder;
 import com.interviewmate.interview.service.gpt.GptClient;
 import com.interviewmate.interview.service.model.AiChatResponse;
 import com.interviewmate.interview.service.model.InterviewInput;
@@ -34,7 +35,7 @@ public class InterviewServiceImpl implements InterviewService {
     private final InterviewQuestionMapper interviewQuestionMapper;
     private final AnswerMapper answerMapper;
     private final FeedbackMapper feedbackMapper;
-    private static final Logger logger = LoggerFactory.getLogger(InterviewServiceImpl.class);
+    private final AiPromptBuilder aiPromptBuilder;
 
     @Override
     public InterviewOutput createInterview(InterviewInput input) {
@@ -120,7 +121,7 @@ public class InterviewServiceImpl implements InterviewService {
                 question,
                 1,
                 false,
-                now
+                LocalDateTime.now()
         );
         long start = System.currentTimeMillis();
         interviewQuestionMapper.insert(interviewQuestion);
@@ -194,17 +195,29 @@ public class InterviewServiceImpl implements InterviewService {
         Feedback feedback = feedbackMapper.findByAnswerId(lastAnswer.id());
         if (feedback == null) throw new IllegalStateException("피드백이 존재하지 않습니다.");
 
-        // 4. 프롬프트 구성 (Message 리스트 반환)
+        List<Message> messages = aiPromptBuilder.buildPrompt(lastQuestion, lastAnswer, feedback);
 
-        // 5. GPT 호출 → 질문 생성
+        AiChatResponse response = gptClient.generate(messages);
+        String newQuestionContent = response.result().output().content();
 
-        // 6. 다음 질문 순서 계산
+        int nextOrder = lastQuestion.getQuestionOrder() + 1;
 
-        // 7. 인터뷰 질문 도메인 객체 생성
+        InterviewQuestion newQuestion = InterviewQuestion.builder()
+                .id(UUID.randomUUID().toString())
+                .interviewId(interviewId)
+                .content(newQuestionContent)
+                .questionOrder(nextOrder)
+                .answered(false)
+                .createdAt(LocalDateTime.now())
+                .build();
+        interviewQuestionMapper.insert(newQuestion);
 
-        // 8. DB 저장
-
-        // 9. 도메인 객체로 반환
-        return null;
+        return new Question(
+                newQuestion.getId(),
+                newQuestion.getInterviewId(),
+                newQuestion.getContent(),
+                newQuestion.getQuestionOrder(),
+                newQuestion.isAnswered(),
+                newQuestion.getCreatedAt());
     }
 }
