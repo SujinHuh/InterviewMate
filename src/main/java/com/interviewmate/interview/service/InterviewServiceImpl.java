@@ -17,8 +17,6 @@ import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.stereotype.Service;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
 
@@ -183,7 +181,7 @@ public class InterviewServiceImpl implements InterviewService {
     }
 
     @Override
-    public Question generateNextQuestion(String interviewId) {
+    public QuestionResponseDTO generateNextQuestion(String interviewId) {
 
         InterviewQuestion lastQuestion = interviewQuestionMapper.findTopByInterviewIdOrderByQuestionOrderDesc(interviewId);
 
@@ -212,12 +210,12 @@ public class InterviewServiceImpl implements InterviewService {
                 .build();
         interviewQuestionMapper.insert(newQuestion);
 
-        return new Question(
-                newQuestion.getId(),
-                newQuestion.getInterviewId(),
-                newQuestion.getContent(),
-                newQuestion.getQuestionOrder(),
-                newQuestion.isAnswered(),
-                newQuestion.getCreatedAt());
+        return QuestionResponseDTO.builder()
+                .id(newQuestion.getId())
+                .content(newQuestion.getContent())
+                .questionOrder(newQuestion.getQuestionOrder())
+                .isAnswered(newQuestion.isAnswered())
+                .createdAt(Timestamp.valueOf(newQuestion.getCreatedAt()))
+                .build();
     }
 }

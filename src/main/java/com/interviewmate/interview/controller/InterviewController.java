@@ -1,12 +1,11 @@
 package com.interviewmate.interview.controller;
 
-import ch.qos.logback.core.model.processor.PhaseIndicator;
 import com.interviewmate.exception.InterviewCreationException;
-import com.interviewmate.interview.controller.dto.*;
-import com.interviewmate.interview.domain.Answer;
-import com.interviewmate.interview.domain.Feedback;
-import com.interviewmate.interview.domain.InterviewQuestion;
-import com.interviewmate.interview.domain.Question;
+import com.interviewmate.interview.controller.dto.AnswerResponseDTO;
+import com.interviewmate.interview.controller.dto.InterviewRequestDTO;
+import com.interviewmate.interview.controller.dto.InterviewResponseDTO;
+import com.interviewmate.interview.controller.dto.QuestionResponseDTO;
+import com.interviewmate.interview.controller.dto.AnswerRequestDTO;
 import com.interviewmate.interview.repository.AnswerMapper;
 import com.interviewmate.interview.repository.FeedbackMapper;
 import com.interviewmate.interview.service.InterviewService;
@@ -61,7 +60,10 @@ public class InterviewController {
 
         String questionId = interviewService.saveQuestion(interviewId, question);
 
-        QuestionResponseDTO questionResponse = new QuestionResponseDTO(questionId, question);
+        QuestionResponseDTO questionResponse = QuestionResponseDTO.builder()
+                .id(questionId)
+                .content(question)
+                .build();
 
         return ResponseEntity.ok(questionResponse);
     }
@@ -90,9 +92,8 @@ public class InterviewController {
     @Operation(description = "Generate next interview question")
     public ResponseEntity<QuestionResponseDTO> generateNextQuestion(@PathVariable String interviewId) {
 
-        Question question = interviewService.generateNextQuestion(interviewId);
-        QuestionResponseDTO nextQuestionResponse = new QuestionResponseDTO(question.id(), question.content());
+        QuestionResponseDTO response = interviewService.generateNextQuestion(interviewId);
 
-        return ResponseEntity.ok(nextQuestionResponse);
+        return ResponseEntity.ok(response);
     }
 }

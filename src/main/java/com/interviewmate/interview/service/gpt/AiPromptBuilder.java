@@ -6,10 +6,12 @@ import com.interviewmate.interview.domain.InterviewQuestion;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Component
 public class AiPromptBuilder {
 
     public List<Message> buildPrompt(InterviewQuestion question, Answer answer, Feedback feedback) {
