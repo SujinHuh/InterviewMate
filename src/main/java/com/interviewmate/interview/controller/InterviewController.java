@@ -6,13 +6,12 @@ import com.interviewmate.interview.controller.dto.InterviewRequestDTO;
 import com.interviewmate.interview.controller.dto.InterviewResponseDTO;
 import com.interviewmate.interview.controller.dto.QuestionResponseDTO;
 import com.interviewmate.interview.controller.dto.AnswerRequestDTO;
-import com.interviewmate.interview.repository.AnswerMapper;
-import com.interviewmate.interview.repository.FeedbackMapper;
 import com.interviewmate.interview.service.InterviewService;
 import com.interviewmate.interview.service.model.InterviewInput;
 import com.interviewmate.interview.service.model.InterviewOutput;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,18 +19,12 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/interviews")
 public class InterviewController {
 
     private final InterviewService interviewService;
-    private final FeedbackMapper feedbackMapper;
-    private final AnswerMapper answerMapper;
 
-    public InterviewController(InterviewService interviewService, FeedbackMapper feedbackMapper, AnswerMapper answerMapper) {
-        this.interviewService = interviewService;
-        this.feedbackMapper = feedbackMapper;
-        this.answerMapper = answerMapper;
-    }
 
     @PostMapping
     @Operation(description = "Start new interview")
