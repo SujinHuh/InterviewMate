@@ -62,4 +62,11 @@ public class GlobalExceptionHandler {
         errorLogger.error("처리되지 않은 예외 발생: {}", ex.getMessage(), ex);
         return buildErrorResponse("Internal Server Error", "서버 내부 에러가 발생했습니다.", 500);
     }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<Map<String,Object>> handleBadState(IllegalStateException ex) {
+        errorLogger.warn("잘못된 인터뷰 흐름 상태: {}", ex.getMessage(), ex);
+        return buildErrorResponse("Bad Request", ex.getMessage(), 400);
+    }
+
 }

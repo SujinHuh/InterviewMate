@@ -13,6 +13,8 @@ import com.interviewmate.interview.service.model.AiChatResponse;
 import com.interviewmate.interview.service.model.InterviewInput;
 import com.interviewmate.interview.service.model.InterviewOutput;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
@@ -34,7 +36,7 @@ public class InterviewServiceImpl implements InterviewService {
     private final AnswerMapper answerMapper;
     private final FeedbackMapper feedbackMapper;
     private final AiPromptBuilder aiPromptBuilder;
-
+    private static final Logger log = LoggerFactory.getLogger(InterviewServiceImpl.class);
     @Override
     public InterviewOutput createInterview(InterviewInput input) {
 
@@ -182,22 +184,38 @@ public class InterviewServiceImpl implements InterviewService {
 
     @Override
     public QuestionResponseDTO generateNextQuestion(String interviewId) {
+        long startTime = System.currentTimeMillis();
 
         InterviewQuestion lastQuestion = interviewQuestionMapper.findTopByInterviewIdOrderByQuestionOrderDesc(interviewId);
-
-        if (lastQuestion == null) throw new IllegalStateException("이전 질문이 존재하지 않습니다.");
+        if (lastQuestion == null) {
+            MDC.put("failReason", "이전 질문 없음");
+            log.warn("generateNextQuestion 실패: interviewId={}, reason={}", interviewId, MDC.get("failReason"));
+            throw new IllegalStateException("이전 질문이 존재하지 않습니다.");
+        }
 
         Answer lastAnswer = answerMapper.findByQuestionId(lastQuestion.getId());
-        if (lastAnswer == null) throw new IllegalStateException("이전 질문에 대한 답변이 존재하지 않습니다.");
+        if (lastAnswer == null) {
+            MDC.put("failReason", "이전 질문에 대한 답변 없음");
+            log.warn("generateNextQuestion 실패: interviewId={}, lastQuestionId={}, reason={}",
+                    interviewId, lastQuestion.getId(), MDC.get("failReason"));
+            throw new IllegalStateException("이전 질문에 대한 답변이 존재하지 않습니다.");
+        }
 
         Feedback feedback = feedbackMapper.findByAnswerId(lastAnswer.id());
-        if (feedback == null) throw new IllegalStateException("피드백이 존재하지 않습니다.");
+        if (feedback == null) {
+            MDC.put("failReason", "피드백 없음");
+            log.warn("generateNextQuestion 실패: interviewId={}, lastAnswerId={}, reason={}",
+                    interviewId, lastAnswer.id(), MDC.get("failReason"));
+            throw new IllegalStateException("피드백이 존재하지 않습니다.");
+        }
 
         List<Message> messages = aiPromptBuilder.buildPrompt(lastQuestion, lastAnswer, feedback);
 
+        long aiStart = System.currentTimeMillis();
         AiChatResponse response = gptClient.generate(messages);
-        String newQuestionContent = response.result().output().content();
+        MDC.put("aiElapsed", String.valueOf(System.currentTimeMillis() - aiStart));
 
+        String newQuestionContent = response.result().output().content();
         int nextOrder = lastQuestion.getQuestionOrder() + 1;
 
         InterviewQuestion newQuestion = InterviewQuestion.builder()
@@ -208,11 +226,21 @@ public class InterviewServiceImpl implements InterviewService {
                 .answered(false)
                 .createdAt(LocalDateTime.now())
                 .build();
+
+        long dbStart = System.currentTimeMillis();
         interviewQuestionMapper.insert(newQuestion);
+        MDC.put("dbElapsed", String.valueOf(System.currentTimeMillis() - dbStart));
 
         if (nextOrder == 3) {
             generateFinalFeedback(interviewId);
         }
+
+        MDC.put("totalElapsed", String.valueOf(System.currentTimeMillis() - startTime));
+
+        log.info("generateNextQuestion 완료: interviewId={}, newQuestionId={}, questionOrder={}, aiElapsed={}ms, dbElapsed={}ms, totalElapsed={}ms",
+                interviewId, newQuestion.getId(), nextOrder, MDC.get("aiElapsed"), MDC.get("dbElapsed"), MDC.get("totalElapsed"));
+
+        MDC.clear();
 
         return QuestionResponseDTO.builder()
                 .id(newQuestion.getId())
@@ -222,6 +250,7 @@ public class InterviewServiceImpl implements InterviewService {
                 .createdAt(Timestamp.valueOf(newQuestion.getCreatedAt()))
                 .build();
     }
+
     private void generateFinalFeedback(String interviewId) {
         // TODO: 지금까지의 질문, 답변, 피드백을 인터뷰 ID 기준으로 모두 조회
         // TODO: GPT 프롬프트 구성 및 최종 피드백 생성 후 DB 저장
