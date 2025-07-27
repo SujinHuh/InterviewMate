@@ -26,7 +26,7 @@ public class AiPromptBuilder {
 
         promptMessages.add(new UserMessage("이전 질문: " + question.getContent()));
         promptMessages.add(new UserMessage("사용자 답변: " + answer.content()));
-        promptMessages.add(new UserMessage("피드백: " + feedback.perAnswerFeedback()));
+        promptMessages.add(new UserMessage("피드백: " + feedback.feedbackContent()));
 
         return promptMessages;
     }

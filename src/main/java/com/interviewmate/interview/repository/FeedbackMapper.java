@@ -11,14 +11,14 @@ public interface FeedbackMapper {
             INSERT INTO feedback (
               id,
               answer_id,
-              per_answer_feedback,
+              feedback_content,
               score,
               keyword_highlight,
               created_at
             ) VALUES (
               #{id},
               #{answerId},
-              #{perAnswerFeedback},
+              #{feedbackContent},
               #{score},
               #{keywordHighlight},
               #{createdAt}
@@ -27,15 +27,15 @@ public interface FeedbackMapper {
     void insert(Feedback feedback);
 
     @Select("""
-                SELECT 
-                    id,
-                    answer_id,
-                    per_answer_feedback,
-                    score,
-                    keyword_highlight,
-                    created_at
-                FROM feedback
-                WHERE answer_id = #{answerId}
+            SELECT
+              id,
+              answer_id          AS answerId,
+              feedback_content   AS feedbackContent,
+              score,
+              keyword_highlight  AS keywordHighlight,
+              created_at         AS createdAt
+            FROM feedback
+            WHERE answer_id = #{answerId}
             """)
     Feedback findByAnswerId(String answerId);
 

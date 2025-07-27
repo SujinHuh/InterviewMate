@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 public record Feedback(
     String id,
     String answerId,
-    String perAnswerFeedback,
+    String feedbackContent,
     int score,
     String keywordHighlight,
     LocalDateTime createdAt

@@ -1,11 +1,7 @@
 package com.interviewmate.interview.controller;
 
 import com.interviewmate.exception.InterviewCreationException;
-import com.interviewmate.interview.controller.dto.AnswerResponseDTO;
-import com.interviewmate.interview.controller.dto.InterviewRequestDTO;
-import com.interviewmate.interview.controller.dto.InterviewResponseDTO;
-import com.interviewmate.interview.controller.dto.QuestionResponseDTO;
-import com.interviewmate.interview.controller.dto.AnswerRequestDTO;
+import com.interviewmate.interview.controller.dto.*;
 import com.interviewmate.interview.service.InterviewService;
 import com.interviewmate.interview.service.model.InterviewInput;
 import com.interviewmate.interview.service.model.InterviewOutput;
@@ -27,7 +23,10 @@ public class InterviewController {
 
 
     @PostMapping
-    @Operation(description = "Start new interview")
+    @Operation(
+            summary     = "인터뷰 생성",
+            description = "사용자가 입력한 userId와 topic으로 새로운 인터뷰를 생성하고, 생성된 인터뷰의 ID와 topic을 반환합니다."
+    )
     public ResponseEntity<InterviewResponseDTO> createInterview(@Valid @RequestBody InterviewRequestDTO request) {
 
         InterviewInput input = new InterviewInput(request.getUserId(), request.getTopic());
@@ -44,7 +43,10 @@ public class InterviewController {
     }
 
     @PostMapping("/{interviewId}/questions")
-    @Operation(description = "Generate interview question")
+    @Operation(
+            summary     = "면접 질문 생성",
+            description = "주어진 interviewId의 인터뷰 토픽을 조회한 뒤, 해당 토픽으로 새로운 질문을 생성하고 생성된 질문의 ID와 내용을 반환합니다."
+    )
     public ResponseEntity<QuestionResponseDTO> createQuestions(@PathVariable String interviewId) {
 
         String topic = interviewService.getTopicByInterviewId(interviewId);
@@ -62,7 +64,10 @@ public class InterviewController {
     }
 
     @PostMapping("/{interviewId}/questions/{questionId}/answers")
-    @Operation(description = "Submit only answer")
+    @Operation(
+            summary     = "답변 제출",
+            description = "주어진 interviewId와 questionId에 대해 사용자가 제출한 답변을 저장하고, 생성된 답변의 ID를 반환합니다."
+    )
     @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<AnswerResponseDTO> submitAnswerAndFeedback(@PathVariable String interviewId, @PathVariable String questionId, @Valid @RequestBody AnswerRequestDTO answerRequestDTO) {
 
@@ -81,8 +86,28 @@ public class InterviewController {
                 + "/answers/" + answerId);
     }
 
+
+    @PostMapping("/{interviewId}/questions/{questionId}/answers/{answerId}/feedback")
+    @ResponseStatus(HttpStatus.CREATED)
+    @Operation(
+            summary     = "피드백 저장",
+            description = "사용자가 제출한 답변(answerId)에 대해 AI가 생성한 피드백을 저장하고, 저장된 피드백의 ID를 반환합니다."
+    )
+    public FeedbackResponseDTO submitFeedback(@PathVariable String interviewId, @PathVariable String questionId, @PathVariable String answerId, @Valid @RequestBody FeedbackRequestDTO request
+    ) {
+        String feedbackId = interviewService.submitFeedback(interviewId, questionId, answerId, request);
+
+        return new FeedbackResponseDTO(
+                feedbackId,
+                "피드백이 성공적으로 저장되었습니다."
+        );
+    }
+
     @PostMapping("{interviewId}/questions/next")
-    @Operation(description = "Generate next interview question")
+    @Operation(
+            summary     = "다음 질문 생성",
+            description = "주어진 interviewId의 인터뷰에서 마지막 질문, 답변, 피드백을 바탕으로 새로운 면접 질문을 생성하고, 생성된 질문의 ID와 내용을 반환합니다."
+    )
     public ResponseEntity<QuestionResponseDTO> generateNextQuestion(@PathVariable String interviewId) {
 
         QuestionResponseDTO response = interviewService.generateNextQuestion(interviewId);

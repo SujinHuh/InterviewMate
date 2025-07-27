@@ -1,6 +1,8 @@
 package com.interviewmate.interview.service;
 
+import com.interviewmate.exception.InterviewNotFoundException;
 import com.interviewmate.interview.controller.dto.AnswerRequestDTO;
+import com.interviewmate.interview.controller.dto.FeedbackRequestDTO;
 import com.interviewmate.interview.controller.dto.QuestionResponseDTO;
 import com.interviewmate.interview.domain.*;
 import com.interviewmate.interview.repository.AnswerMapper;
@@ -183,10 +185,37 @@ public class InterviewServiceImpl implements InterviewService {
     }
 
     @Override
+    public String submitFeedback(String interviewId, String questionId, String answerId, FeedbackRequestDTO request){
+
+        if(interviewQuestionMapper.findByInterviewId(questionId) == null) {
+            throw new InterviewNotFoundException("존재하지 않는 질문입니다. questionId = " +  questionId );
+        }
+        if(answerMapper.findById(answerId) == null) {
+            throw new InterviewNotFoundException("존재하지 않는 답변입니다. answerId = " + answerId );
+        }
+        List<Message> prompt = List.of(
+                new SystemMessage("당신은 10년 차 백엔드 개발자 면접관입니다. 아래 지원자의 답변을 보고 구체적이고 긍정적인 피드백을 작성해주세요."+  "그런 다음, 생성된 피드백을 핵심 문장 1~2개로 요약해서 반환해 주세요."),
+                new UserMessage("답변: " + request.content())
+        );
+        AiChatResponse aiChatResponse = gptClient.generate(prompt);
+        String feedbackContent = aiChatResponse.result().output().content();
+
+        String feedbackId = UUID.randomUUID().toString();
+        Feedback feedback = new Feedback(feedbackId,answerId,feedbackContent,0,null,LocalDateTime.now());
+
+        feedbackMapper.insert(feedback);
+
+        interviewQuestionMapper.markAnswered(questionId);
+
+        return feedbackId;
+
+    }
+
+    @Override
     public QuestionResponseDTO generateNextQuestion(String interviewId) {
         long startTime = System.currentTimeMillis();
 
-        InterviewQuestion lastQuestion = interviewQuestionMapper.findTopByInterviewIdOrderByQuestionOrderDesc(interviewId);
+        InterviewQuestion lastQuestion = interviewQuestionMapper.findLastAnsweredQuestion(interviewId);
         if (lastQuestion == null) {
             MDC.put("failReason", "이전 질문 없음");
             log.warn("generateNextQuestion 실패: interviewId={}, reason={}", interviewId, MDC.get("failReason"));
