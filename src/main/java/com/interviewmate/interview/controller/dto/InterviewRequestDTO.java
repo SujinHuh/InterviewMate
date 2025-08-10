@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotBlank;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class InterviewRequest {
+public class InterviewRequestDTO {
 
     @NotBlank(message = "사용자 ID는 필수입니다.")
     private String userId;

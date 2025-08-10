@@ -7,32 +7,45 @@ import org.apache.ibatis.annotations.Select;
 
 @Mapper
 public interface AnswerMapper {
+
     @Insert("""
-            INSERT INTO answer (
-              id,
-              question_id,
-              content,
-              submitted_at,
-              is_submitted
-            ) VALUES (
-              #{id},
-              #{questionId},
-              #{content},
-              #{submittedAt},
-              #{isSubmitted}
-            )
-            """)
+        INSERT INTO answer (
+            id,
+            question_id,
+            content,
+            submitted_at,
+            is_submitted
+        ) VALUES (
+            #{id},
+            #{questionId},
+            #{content},
+            #{submittedAt},
+            #{isSubmitted}
+        )
+        """)
     void insert(Answer answer);
 
     @Select("""
-            SELECT
-              id,
-              question_id   AS questionId,
-              content,
-              submitted_at  AS submittedAt,
-              is_submitted  AS isSubmitted
-            FROM answer
-            WHERE id = #{id}
-            """)
+        SELECT
+            id,
+            question_id     AS questionId,
+            content,
+            submitted_at    AS submittedAt,
+            is_submitted    AS isSubmitted
+        FROM answer
+        WHERE id = #{id}
+        """)
     Answer findById(String id);
+
+    @Select("""
+        SELECT
+            id,
+            question_id     AS questionId,
+            content,
+            submitted_at    AS submittedAt,
+            is_submitted    AS isSubmitted
+        FROM answer
+        WHERE question_id = #{questionId}
+        """)
+    Answer findByQuestionId(String questionId);
 }

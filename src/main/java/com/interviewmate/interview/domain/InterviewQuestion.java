@@ -1,14 +1,15 @@
 package com.interviewmate.interview.domain;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
+
+@Builder
 @Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class InterviewQuestion {
@@ -17,5 +18,6 @@ public class InterviewQuestion {
     private String content;
     private int questionOrder;
     private boolean answered;
-    private Timestamp createdAt;
+    private LocalDateTime createdAt;
+
 }

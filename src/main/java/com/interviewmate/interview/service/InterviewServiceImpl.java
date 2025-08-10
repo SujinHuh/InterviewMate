@@ -1,25 +1,26 @@
 package com.interviewmate.interview.service;
 
-import com.interviewmate.interview.controller.dto.AnswerRequest;
-import com.interviewmate.interview.domain.Answer;
-import com.interviewmate.interview.domain.Feedback;
-import com.interviewmate.interview.domain.Interview;
-import com.interviewmate.interview.domain.InterviewQuestion;
+import com.interviewmate.exception.InterviewNotFoundException;
+import com.interviewmate.interview.controller.dto.AnswerRequestDTO;
+import com.interviewmate.interview.controller.dto.FeedbackRequestDTO;
+import com.interviewmate.interview.controller.dto.QuestionResponseDTO;
+import com.interviewmate.interview.domain.*;
 import com.interviewmate.interview.repository.AnswerMapper;
 import com.interviewmate.interview.repository.FeedbackMapper;
 import com.interviewmate.interview.repository.InterviewMapper;
 import com.interviewmate.interview.repository.InterviewQuestionMapper;
+import com.interviewmate.interview.service.gpt.AiPromptBuilder;
 import com.interviewmate.interview.service.gpt.GptClient;
 import com.interviewmate.interview.service.model.AiChatResponse;
 import com.interviewmate.interview.service.model.InterviewInput;
 import com.interviewmate.interview.service.model.InterviewOutput;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.stereotype.Service;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
 
@@ -36,8 +37,8 @@ public class InterviewServiceImpl implements InterviewService {
     private final InterviewQuestionMapper interviewQuestionMapper;
     private final AnswerMapper answerMapper;
     private final FeedbackMapper feedbackMapper;
-    private static final Logger logger = LoggerFactory.getLogger(InterviewServiceImpl.class);
-
+    private final AiPromptBuilder aiPromptBuilder;
+    private static final Logger log = LoggerFactory.getLogger(InterviewServiceImpl.class);
     @Override
     public InterviewOutput createInterview(InterviewInput input) {
 
@@ -122,7 +123,7 @@ public class InterviewServiceImpl implements InterviewService {
                 question,
                 1,
                 false,
-                now
+                LocalDateTime.now()
         );
         long start = System.currentTimeMillis();
         interviewQuestionMapper.insert(interviewQuestion);
@@ -133,14 +134,14 @@ public class InterviewServiceImpl implements InterviewService {
     }
 
     @Override
-    public String submitAnswer(String interviewId, String questionId, AnswerRequest answerRequest) {
+    public String submitAnswer(String interviewId, String questionId, AnswerRequestDTO answerRequestDTO) {
 
         String answerId = UUID.randomUUID().toString();
 
         Answer answer = new Answer(
                 answerId,
                 questionId,
-                answerRequest.content(),
+                answerRequestDTO.content(),
                 LocalDateTime.now(),
                 true
         );
@@ -183,5 +184,104 @@ public class InterviewServiceImpl implements InterviewService {
         return feedbackId;
     }
 
+    @Override
+    public String submitFeedback(String interviewId, String questionId, String answerId, FeedbackRequestDTO request){
 
+        if(interviewQuestionMapper.findByInterviewId(questionId) == null) {
+            throw new InterviewNotFoundException("존재하지 않는 질문입니다. questionId = " +  questionId );
+        }
+        if(answerMapper.findById(answerId) == null) {
+            throw new InterviewNotFoundException("존재하지 않는 답변입니다. answerId = " + answerId );
+        }
+        List<Message> prompt = List.of(
+                new SystemMessage("당신은 10년 차 백엔드 개발자 면접관입니다. 아래 지원자의 답변을 보고 구체적이고 긍정적인 피드백을 작성해주세요."+  "그런 다음, 생성된 피드백을 핵심 문장 1~2개로 요약해서 반환해 주세요."),
+                new UserMessage("답변: " + request.content())
+        );
+        AiChatResponse aiChatResponse = gptClient.generate(prompt);
+        String feedbackContent = aiChatResponse.result().output().content();
+
+        String feedbackId = UUID.randomUUID().toString();
+        Feedback feedback = new Feedback(feedbackId,answerId,feedbackContent,0,null,LocalDateTime.now());
+
+        feedbackMapper.insert(feedback);
+
+        interviewQuestionMapper.markAnswered(questionId);
+
+        return feedbackId;
+
+    }
+
+    @Override
+    public QuestionResponseDTO generateNextQuestion(String interviewId) {
+        long startTime = System.currentTimeMillis();
+
+        InterviewQuestion lastQuestion = interviewQuestionMapper.findLastAnsweredQuestion(interviewId);
+        if (lastQuestion == null) {
+            MDC.put("failReason", "이전 질문 없음");
+            log.warn("generateNextQuestion 실패: interviewId={}, reason={}", interviewId, MDC.get("failReason"));
+            throw new IllegalStateException("이전 질문이 존재하지 않습니다.");
+        }
+
+        Answer lastAnswer = answerMapper.findByQuestionId(lastQuestion.getId());
+        if (lastAnswer == null) {
+            MDC.put("failReason", "이전 질문에 대한 답변 없음");
+            log.warn("generateNextQuestion 실패: interviewId={}, lastQuestionId={}, reason={}",
+                    interviewId, lastQuestion.getId(), MDC.get("failReason"));
+            throw new IllegalStateException("이전 질문에 대한 답변이 존재하지 않습니다.");
+        }
+
+        Feedback feedback = feedbackMapper.findByAnswerId(lastAnswer.id());
+        if (feedback == null) {
+            MDC.put("failReason", "피드백 없음");
+            log.warn("generateNextQuestion 실패: interviewId={}, lastAnswerId={}, reason={}",
+                    interviewId, lastAnswer.id(), MDC.get("failReason"));
+            throw new IllegalStateException("피드백이 존재하지 않습니다.");
+        }
+
+        List<Message> messages = aiPromptBuilder.buildPrompt(lastQuestion, lastAnswer, feedback);
+
+        long aiStart = System.currentTimeMillis();
+        AiChatResponse response = gptClient.generate(messages);
+        MDC.put("aiElapsed", String.valueOf(System.currentTimeMillis() - aiStart));
+
+        String newQuestionContent = response.result().output().content();
+        int nextOrder = lastQuestion.getQuestionOrder() + 1;
+
+        InterviewQuestion newQuestion = InterviewQuestion.builder()
+                .id(UUID.randomUUID().toString())
+                .interviewId(interviewId)
+                .content(newQuestionContent)
+                .questionOrder(nextOrder)
+                .answered(false)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        long dbStart = System.currentTimeMillis();
+        interviewQuestionMapper.insert(newQuestion);
+        MDC.put("dbElapsed", String.valueOf(System.currentTimeMillis() - dbStart));
+
+        if (nextOrder == 3) {
+            generateFinalFeedback(interviewId);
+        }
+
+        MDC.put("totalElapsed", String.valueOf(System.currentTimeMillis() - startTime));
+
+        log.info("generateNextQuestion 완료: interviewId={}, newQuestionId={}, questionOrder={}, aiElapsed={}ms, dbElapsed={}ms, totalElapsed={}ms",
+                interviewId, newQuestion.getId(), nextOrder, MDC.get("aiElapsed"), MDC.get("dbElapsed"), MDC.get("totalElapsed"));
+
+        MDC.clear();
+
+        return QuestionResponseDTO.builder()
+                .id(newQuestion.getId())
+                .content(newQuestion.getContent())
+                .questionOrder(newQuestion.getQuestionOrder())
+                .isAnswered(newQuestion.isAnswered())
+                .createdAt(Timestamp.valueOf(newQuestion.getCreatedAt()))
+                .build();
+    }
+
+    private void generateFinalFeedback(String interviewId) {
+        // TODO: 지금까지의 질문, 답변, 피드백을 인터뷰 ID 기준으로 모두 조회
+        // TODO: GPT 프롬프트 구성 및 최종 피드백 생성 후 DB 저장
+    }
 }
