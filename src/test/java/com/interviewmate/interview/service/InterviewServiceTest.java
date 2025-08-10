@@ -130,7 +130,7 @@ class InterviewServiceTest {
         verify(feedbackMapper).insert(captor.capture());
 
         Feedback saved = captor.getValue();
-        assertEquals("AI 요약 피드백입니다", saved.perAnswerFeedback());
+        assertEquals("AI 요약 피드백입니다", saved.feedbackContent());
 
         assertNotNull(saveFeedback);
     }
