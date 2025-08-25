@@ -3,6 +3,7 @@ package com.interviewmate.interview.service;
 import com.interviewmate.interview.controller.dto.AnswerRequestDTO;
 import com.interviewmate.interview.domain.Answer;
 import com.interviewmate.interview.domain.Feedback;
+import com.interviewmate.interview.domain.InterviewQuestion;
 import com.interviewmate.interview.repository.AnswerMapper;
 import com.interviewmate.interview.repository.FeedbackMapper;
 import com.interviewmate.interview.repository.InterviewMapper;
@@ -130,8 +131,15 @@ class InterviewServiceTest {
         verify(feedbackMapper).insert(captor.capture());
 
         Feedback saved = captor.getValue();
-        assertEquals("AI 요약 피드백입니다", saved.perAnswerFeedback());
+        assertEquals("AI 요약 피드백입니다", saved.feedbackContent());
 
         assertNotNull(saveFeedback);
     }
+
+    @Test
+    void generateNextQuestion_정상호출_nextOrder2(){
+
+    }
+
+
 }
