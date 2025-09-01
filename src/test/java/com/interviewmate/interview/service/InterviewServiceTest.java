@@ -1,12 +1,15 @@
 package com.interviewmate.interview.service;
 
 import com.interviewmate.interview.controller.dto.AnswerRequestDTO;
+import com.interviewmate.interview.controller.dto.QuestionResponseDTO;
 import com.interviewmate.interview.domain.Answer;
 import com.interviewmate.interview.domain.Feedback;
 import com.interviewmate.interview.domain.InterviewQuestion;
 import com.interviewmate.interview.repository.AnswerMapper;
 import com.interviewmate.interview.repository.FeedbackMapper;
 import com.interviewmate.interview.repository.InterviewMapper;
+import com.interviewmate.interview.repository.InterviewQuestionMapper;
+import com.interviewmate.interview.service.gpt.AiPromptBuilder;
 import com.interviewmate.interview.service.gpt.GptClient;
 import com.interviewmate.interview.service.model.*;
 import org.junit.jupiter.api.Test;
@@ -15,15 +18,17 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.messages.SystemMessage;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class InterviewServiceTest {
@@ -36,9 +41,12 @@ class InterviewServiceTest {
     private InterviewServiceImpl interviewService;
     @Mock
     private InterviewMapper interviewMapper;
-
+    @Mock
+    InterviewQuestionMapper interviewQuestionMapper;
     @Mock
     private FeedbackMapper feedbackMapper;
+    @Mock
+    private AiPromptBuilder aiPromptBuilder;
 
     @Test
     void createInterview_200_OK() {
@@ -137,8 +145,52 @@ class InterviewServiceTest {
     }
 
     @Test
-    void generateNextQuestion_정상호출_nextOrder2(){
+    void generateNextQuestion_정상호출_nextOrder2_finalFeedback_미호출() {
 
+        InterviewQuestion lastQuestion = InterviewQuestion.builder()
+                .id("question-id")
+                .interviewId("interview-id")
+                .content("Q1 내용")
+                .questionOrder(1)
+                .answered(true)
+                .createdAt(LocalDateTime.now().minusMinutes(1))
+                .build();
+
+        Answer lastAnswer = new Answer(
+                "answer-id", "question-id", "사용자 답변", LocalDateTime.now().minusSeconds(30), true
+        );
+
+        Feedback feedback = new Feedback(
+                "feedback-id", "answer-id", "피드백 요약 내용", 0, null, LocalDateTime.now().minusSeconds(10)
+        );
+
+        when(interviewQuestionMapper.findLastAnsweredQuestion("interview-id"))
+                .thenReturn(lastQuestion);
+
+        when(answerMapper.findByQuestionId("question-id"))
+                .thenReturn(lastAnswer);
+
+        when(feedbackMapper.findByAnswerId("answer-id"))
+                .thenReturn(feedback);
+
+        List<Message> dummyMessages = List.of(new SystemMessage("dummy"));
+        when(aiPromptBuilder.buildPrompt(lastQuestion, lastAnswer, feedback))
+                .thenReturn(dummyMessages);
+
+        AiChatResponse aiChatResponse = new AiChatResponse(new AiChatResult(new AiChatMessage("새 질문 내용")));
+        when(gptClient.generate(dummyMessages)).thenReturn(aiChatResponse);
+
+        ArgumentCaptor<InterviewQuestion> captor = ArgumentCaptor.forClass(InterviewQuestion.class);
+        doNothing().when(interviewQuestionMapper).insert(captor.capture());
+
+        when(interviewQuestionMapper.findLastAnsweredQuestion("interview-id"))
+                .thenReturn(lastQuestion);
+        QuestionResponseDTO result = interviewService.generateNextQuestion("interview-id");
+
+        assertNotNull(result);
+        assertEquals("새 질문 내용", result.getContent());
+        assertEquals(2, result.getQuestionOrder());
+        assertEquals(false, result.isAnswered());
     }
 
 
