@@ -7,18 +7,27 @@ import com.interviewmate.interview.domain.User;
 import com.interviewmate.interview.repository.FeedbackMapper;
 import com.interviewmate.interview.repository.InterviewMapper;
 import com.interviewmate.interview.repository.UserMapper;
+import com.interviewmate.interview.service.gpt.GptClient;
+import com.interviewmate.interview.service.model.AiChatMessage;
+import com.interviewmate.interview.service.model.AiChatResponse;
+import com.interviewmate.interview.service.model.AiChatResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.Sql.ExecutionPhase;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -42,6 +51,8 @@ class InterviewControllerIntegrationTest {
     @Autowired
     private FeedbackMapper feedbackMapper;
 
+    @MockBean GptClient gptClient;
+
     private final String userId = "user-123";
 
     @BeforeEach
@@ -51,7 +62,13 @@ class InterviewControllerIntegrationTest {
         user.setNickname("테스트유저");
         user.setGuest(false);
         userMapper.insert(user);
+
+        when(gptClient.generate(anyList())).thenReturn(new AiChatResponse(new AiChatResult(new AiChatMessage("spring에 대해서 설명해 주세요. (mocked)"))));
+        when(gptClient.generate(anyList())).thenReturn(resp("spring에 대해서 설명해 주세요. (mocked)"), resp("HTTPS는 안전해요! (mocked)"));
+
     }
+
+    private AiChatResponse resp(String text) {return new AiChatResponse(new AiChatResult(new AiChatMessage(text)));}
 
     @Test
     void createInterview_DB까지저장확인() throws Exception {
@@ -97,6 +114,7 @@ class InterviewControllerIntegrationTest {
         String url = "/api/interviews/" + interviewId + "/questions";
 
         var createQuestion = mockMvc.perform(post(url))
+                .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -111,63 +129,69 @@ class InterviewControllerIntegrationTest {
 
     @Test
     void endToEndTest_답변과피드백까지정상작동() throws Exception {
-
         String topic = "spring";
 
-        InterviewRequestDTO request = InterviewRequestDTO.builder()
-                .userId(userId)
-                .topic(topic)
-                .build();
-
-        var mvcResult = mockMvc.perform(post("/api/interviews")
-                        .contentType("application/json")
-                        .content(objectMapper.writeValueAsString(request)))
+        var createInterview = mockMvc.perform(post("/api/interviews")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                InterviewRequestDTO.builder()
+                                        .userId("user-123")
+                                        .topic(topic)
+                                        .build()
+                        )))
                 .andExpect(status().isOk())
                 .andReturn();
 
+        var interviewResp = objectMapper.readValue(
+                createInterview.getResponse().getContentAsString(),
+                InterviewResponseDTO.class
+        );
+        String interviewId = interviewResp.getInterviewId();
 
-        String json = mvcResult.getResponse().getContentAsString();
-
-        InterviewResponseDTO resp = objectMapper.readValue(json, InterviewResponseDTO.class);
-
-        String interviewId = resp.getInterviewId();
-
-        String url = "/api/interviews/" + interviewId + "/questions";
-
-        var createQuestion = mockMvc.perform(post(url))
+        var createQuestion = mockMvc.perform(post("/api/interviews/" + interviewId + "/questions"))
                 .andExpect(status().isOk())
                 .andReturn();
 
-        String questionJson = createQuestion.getResponse().getContentAsString();
-        QuestionResponseDTO questionResponseDTO = objectMapper.readValue(questionJson, QuestionResponseDTO.class);
-        String questionId = questionResponseDTO.getId();
+        var questionResp = objectMapper.readValue(
+                createQuestion.getResponse().getContentAsString(),
+                QuestionResponseDTO.class
+        );
+        String questionId = questionResp.getId();
+        String question   = questionResp.getContent();
 
-        AnswerRequestDTO answerRequestDTO = new AnswerRequestDTO(
+        assertThat(question).isNotBlank();
+        assertThat(question.toLowerCase()).contains(topic); // "spring" 포함 확인
+
+        var answerReq = new AnswerRequestDTO(
                 "user-123",
                 "HTTPS는 HTTP보다 보안성이 강화된 프로토콜입니다."
         );
 
-        String endToEndUrl = "/api/interviews/" + interviewId + "/questions/" + questionId + "/answers";
-
-        var createAnswer = mockMvc.perform(post(endToEndUrl)
-                        .contentType("application/json")
-                        .content(objectMapper.writeValueAsString(answerRequestDTO)))
+        var createAnswer = mockMvc.perform(post("/api/interviews/" + interviewId
+                        + "/questions/" + questionId + "/answers")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(answerReq)))
                 .andExpect(status().isCreated())
                 .andReturn();
 
-        String answerJson = createAnswer.getResponse().getContentAsString();
-        AnswerResponseDTO answerResponseDTO = objectMapper.readValue(answerJson, AnswerResponseDTO.class);
-        String answerId = answerResponseDTO.getAnswerId();
-
-        assertThat(answerId).isNotNull();
+        var answerResp = objectMapper.readValue(
+                createAnswer.getResponse().getContentAsString(),
+                AnswerResponseDTO.class
+        );
+        String answerId = answerResp.getAnswerId();
         assertThat(answerId).isNotBlank();
+
+        var feedbackReq = new FeedbackRequestDTO("user-123", "테스트 답변 내용입니다.");
+        mockMvc.perform(post("/api/interviews/" + interviewId
+                        + "/questions/" + questionId
+                        + "/answers/" + answerId + "/feedback")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(feedbackReq)))
+                .andExpect(status().isCreated());
 
         Feedback feedback = feedbackMapper.findByAnswerId(answerId);
         assertThat(feedback).isNotNull();
-
-        assertThat(feedback.perAnswerFeedback()).contains("HTTPS");
-        assertThat(feedback.perAnswerFeedback()).isNotNull();
-        assertThat(feedback.perAnswerFeedback()).isNotBlank();
-
+        assertThat(feedback.feedbackContent()).isNotBlank();
+        assertThat(feedback.feedbackContent().toLowerCase()).contains("https");
     }
 }
