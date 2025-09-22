@@ -280,7 +280,7 @@ public class InterviewServiceImpl implements InterviewService {
                 .build();
     }
 
-    private void generateFinalFeedback(String interviewId) {
+    void generateFinalFeedback(String interviewId) {
         // TODO: 지금까지의 질문, 답변, 피드백을 인터뷰 ID 기준으로 모두 조회
         // TODO: GPT 프롬프트 구성 및 최종 피드백 생성 후 DB 저장
     }
