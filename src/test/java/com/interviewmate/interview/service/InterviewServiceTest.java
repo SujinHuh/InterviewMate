@@ -1,11 +1,15 @@
 package com.interviewmate.interview.service;
 
 import com.interviewmate.interview.controller.dto.AnswerRequestDTO;
+import com.interviewmate.interview.controller.dto.QuestionResponseDTO;
 import com.interviewmate.interview.domain.Answer;
 import com.interviewmate.interview.domain.Feedback;
+import com.interviewmate.interview.domain.InterviewQuestion;
 import com.interviewmate.interview.repository.AnswerMapper;
 import com.interviewmate.interview.repository.FeedbackMapper;
 import com.interviewmate.interview.repository.InterviewMapper;
+import com.interviewmate.interview.repository.InterviewQuestionMapper;
+import com.interviewmate.interview.service.gpt.AiPromptBuilder;
 import com.interviewmate.interview.service.gpt.GptClient;
 import com.interviewmate.interview.service.model.*;
 import org.junit.jupiter.api.Test;
@@ -13,16 +17,19 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.messages.SystemMessage;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
+
 
 @ExtendWith(MockitoExtension.class)
 class InterviewServiceTest {
@@ -31,13 +38,17 @@ class InterviewServiceTest {
     private GptClient gptClient;
     @Mock
     private AnswerMapper answerMapper;
-    @InjectMocks
+    @Spy @InjectMocks
     private InterviewServiceImpl interviewService;
     @Mock
     private InterviewMapper interviewMapper;
-
+    @Mock
+    InterviewQuestionMapper interviewQuestionMapper;
     @Mock
     private FeedbackMapper feedbackMapper;
+    @Mock
+    private AiPromptBuilder aiPromptBuilder;
+
 
     @Test
     void createInterview_200_OK() {
@@ -87,7 +98,7 @@ class InterviewServiceTest {
 
         String interviewId = "intv-123";
         String questionId = "q-456";
-        AnswerRequestDTO answerRequestDTO = new AnswerRequestDTO("user-123","사용자 답변 내용");
+        AnswerRequestDTO answerRequestDTO = new AnswerRequestDTO("user-123", "사용자 답변 내용");
 
         String answerId = interviewService.submitAnswer(interviewId, questionId, answerRequestDTO);
 
@@ -101,6 +112,7 @@ class InterviewServiceTest {
         assertEquals(questionId, saved.questionId());
         assertEquals(answerRequestDTO.content(), saved.content());
     }
+
     @Test
     void saveFeedback_givenValidAnswerId_fetchesAnswerAndInsertsFeedback() {
 
@@ -130,8 +142,113 @@ class InterviewServiceTest {
         verify(feedbackMapper).insert(captor.capture());
 
         Feedback saved = captor.getValue();
-        assertEquals("AI 요약 피드백입니다", saved.perAnswerFeedback());
+        assertEquals("AI 요약 피드백입니다", saved.feedbackContent());
 
         assertNotNull(saveFeedback);
     }
+
+    @Test
+    void generateNextQuestion_정상호출_nextOrder2_finalFeedback_미호출() {
+
+        InterviewQuestion lastQuestion = InterviewQuestion.builder()
+                .id("question-id")
+                .interviewId("interview-id")
+                .content("Q1 내용")
+                .questionOrder(1)
+                .answered(true)
+                .createdAt(LocalDateTime.now().minusMinutes(1))
+                .build();
+
+        Answer lastAnswer = new Answer(
+                "answer-id", "question-id", "사용자 답변", LocalDateTime.now().minusSeconds(30), true
+        );
+
+        Feedback feedback = new Feedback(
+                "feedback-id", "answer-id", "피드백 요약 내용", 0, null, LocalDateTime.now().minusSeconds(10)
+        );
+
+        when(interviewQuestionMapper.findLastAnsweredQuestion("interview-id"))
+                .thenReturn(lastQuestion);
+
+        when(answerMapper.findByQuestionId("question-id"))
+                .thenReturn(lastAnswer);
+
+        when(feedbackMapper.findByAnswerId("answer-id"))
+                .thenReturn(feedback);
+
+        List<Message> dummyMessages = List.of(new SystemMessage("dummy"));
+        when(aiPromptBuilder.buildPrompt(lastQuestion, lastAnswer, feedback))
+                .thenReturn(dummyMessages);
+
+        AiChatResponse aiChatResponse = new AiChatResponse(new AiChatResult(new AiChatMessage("새 질문 내용")));
+        when(gptClient.generate(dummyMessages)).thenReturn(aiChatResponse);
+
+        ArgumentCaptor<InterviewQuestion> captor = ArgumentCaptor.forClass(InterviewQuestion.class);
+        doNothing().when(interviewQuestionMapper).insert(captor.capture());
+
+        when(interviewQuestionMapper.findLastAnsweredQuestion("interview-id"))
+                .thenReturn(lastQuestion);
+        QuestionResponseDTO result = interviewService.generateNextQuestion("interview-id");
+
+        assertNotNull(result);
+        assertEquals("새 질문 내용", result.getContent());
+        assertEquals(2, result.getQuestionOrder());
+        assertEquals(false, result.isAnswered());
+    }
+
+    @Test
+    void generateNextQuestion_정상_nextOrder3() {
+
+        InterviewQuestion lastQuestion = InterviewQuestion.builder()
+                .id("question-id")
+                .interviewId("interview-id")
+                .content("기존 질문")
+                .questionOrder(2)
+                .answered(true)
+                .createdAt(LocalDateTime.now().minusMinutes(1))
+                .build();
+
+        Answer lastAnswer = new Answer("answer-id", "question-id", "사용자답변", LocalDateTime.now().minusMinutes(30), true);
+
+        Feedback feedback = new Feedback("feedback-id", "answer-id", "피드백", 9, "spring", LocalDateTime.now().minusMinutes(10));
+
+        List<Message> dummyMessages = List.of(new SystemMessage("dummy"));
+
+        AiChatResponse aiResponse = new AiChatResponse(new AiChatResult(new AiChatMessage("새 질문 내용")));
+
+
+        when(aiPromptBuilder.buildPrompt(any(InterviewQuestion.class), any(Answer.class), any(Feedback.class))).thenReturn(dummyMessages);
+        when(gptClient.generate(dummyMessages)).thenReturn(aiResponse);
+
+        when(interviewQuestionMapper.findLastAnsweredQuestion("interview-id")).thenReturn(lastQuestion);
+        when(answerMapper.findByQuestionId("question-id")).thenReturn(lastAnswer);
+        when(feedbackMapper.findByAnswerId("answer-id")).thenReturn(feedback);
+
+        ArgumentCaptor<InterviewQuestion> captor = ArgumentCaptor.forClass(InterviewQuestion.class);
+        doNothing().when(interviewQuestionMapper).insert(captor.capture());
+
+        QuestionResponseDTO result = interviewService.generateNextQuestion("interview-id");
+
+        InterviewQuestion saved = captor.getValue();
+        assertEquals("새 질문 내용", saved.getContent());
+        assertEquals(3, saved.getQuestionOrder());
+        assertFalse(saved.isAnswered());
+
+        assertEquals("새 질문 내용", result.getContent());
+        assertEquals(3, result.getQuestionOrder());
+        assertFalse(result.isAnswered());
+
+        verify(interviewService, times(1)).generateFinalFeedback("interview-id");
+    }
+
+    @Test
+    void generateNextQuestion_예외_lastQuestion없음() {
+
+        // given
+        // 1. when(interviewQuestionMapper.findLastAnsweredQuestion(...)) → null 반환 설정
+        // 2. answerMapper, feedbackMapper 호출 안 됨
+        // 3. assertThrows(IllegalStateException) 사용
+    }
+
+
 }

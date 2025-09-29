@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.interviewmate.exception.InterviewNotFoundException;
 import com.interviewmate.interview.controller.dto.AnswerRequestDTO;
 import com.interviewmate.interview.controller.dto.InterviewRequestDTO;
+import com.interviewmate.interview.controller.dto.QuestionResponseDTO;
 import com.interviewmate.interview.repository.*;
 import com.interviewmate.interview.service.InterviewService;
 import com.interviewmate.interview.service.model.InterviewOutput;
@@ -15,6 +16,9 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
@@ -183,5 +187,28 @@ class InterviewControllerApiTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.answerId").value("answer-123"));
+    }
+    @Test
+    void generateNextQuestion_정상호출() throws Exception{
+
+        String interviewId = "test-id";
+
+        QuestionResponseDTO response = QuestionResponseDTO.builder()
+                .id("question_id")
+                .content("Moke : spring 관련 질문")
+                .questionOrder(2)
+                .isAnswered(false)
+                .createdAt(Timestamp.valueOf(LocalDateTime.now()))
+                .build();
+
+        given(interviewService.generateNextQuestion(interviewId)).willReturn(response);
+
+        mockMvc.perform(post("/api/interviews/{interviewId}/questions/next", interviewId)
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value("question_id"))
+                .andExpect(jsonPath("$.content").value("Moke : spring 관련 질문"))
+                .andExpect(jsonPath("$.questionOrder").value(2))
+                .andExpect(jsonPath("$.answered").value(false));
     }
 }
