@@ -260,8 +260,11 @@ public class InterviewServiceImpl implements InterviewService {
         interviewQuestionMapper.insert(newQuestion);
         MDC.put("dbElapsed", String.valueOf(System.currentTimeMillis() - dbStart));
 
+        // ⚠️ [리팩토링 대상] 세 번째 질문일 때 최종 피드백 호출
+        // TODO: generateFinalFeedback(interviewId)를 직접 호출하지 말고,
+        //       FinalFeedbackService(인터페이스) 같은 별도 컴포넌트를 주입받아 호출하도록 분리하면 테스트 용이성 ↑
         if (nextOrder == 3) {
-            generateFinalFeedback(interviewId);
+            generateFinalFeedback(interviewId); // ← 지금은 private 메소드, 테스트에서 접근 어려움
         }
 
         MDC.put("totalElapsed", String.valueOf(System.currentTimeMillis() - startTime));
@@ -280,6 +283,9 @@ public class InterviewServiceImpl implements InterviewService {
                 .build();
     }
 
+    // ⚠️ [리팩토링 대상] 최종 피드백 생성
+    // TODO: 지금은 내부 private 메소드인데, FinalFeedbackService(인터페이스) 같은 별도 서비스로 추출하고
+    //  인터뷰 종료 시점에만 호출되도록 InterviewServiceImpl에서는 트리거 역할만 하도록 개선 필요
     void generateFinalFeedback(String interviewId) {
         // TODO: 지금까지의 질문, 답변, 피드백을 인터뷰 ID 기준으로 모두 조회
         // TODO: GPT 프롬프트 구성 및 최종 피드백 생성 후 DB 저장
